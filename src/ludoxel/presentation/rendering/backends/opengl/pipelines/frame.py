@@ -7,13 +7,12 @@ from dataclasses import dataclass
 
 from OpenGL.GL import GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS, glClear, glClearColor, glDepthFunc, glDepthMask, glEnable, glViewport
 
-import ludoxel.foundations.mathematics.linear.mat4 as mat4
+import ludoxel.foundations.mathematics.linear.native as mat4
 from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_ULTRA
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.chunks.grid import chunk_key
-from ludoxel.foundations.mathematics.linear.transform_matrices import rotate_z_deg_matrix
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg, rotate_z_deg_matrix
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.presentation.rendering.backends.opengl.othello.render_pass import OthelloPass
 from ludoxel.presentation.rendering.backends.opengl.passes.block_break_particle import BlockBreakParticlePass
 from ludoxel.presentation.rendering.backends.opengl.passes.cloud import CloudPass

@@ -1,14 +1,14 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 [package]
-name = "ludoxel_frustum"
-version = "3.8.6"
+name = "ludoxel_mathematics"
+version = "3.8.7"
 edition = "2021"
 publish = false
 license-file = "../../LICENSE"
 
 [lib]
-name = "ludoxel_frustum"
+name = "ludoxel_mathematics"
 crate-type = ["cdylib"]
 
 [dependencies]

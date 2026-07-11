@@ -2,30 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-export const NATIVE_EXTENSION_MODULES = Object.freeze([
-  Object.freeze({
-    id: 'ray_aabb',
-    moduleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
-    sourcePath: 'src/ludoxel/foundations/mathematics/geometry/ray_aabb.py',
-  }),
-  Object.freeze({
-    id: 'voxel_dda',
-    moduleName: 'ludoxel.foundations.mathematics.voxels.dda',
-    sourcePath: 'src/ludoxel/foundations/mathematics/voxels/dda.py',
-  }),
-  Object.freeze({
-    id: 'view_angles',
-    moduleName: 'ludoxel.foundations.mathematics.linear.view_angles',
-    sourcePath: 'src/ludoxel/foundations/mathematics/linear/view_angles.py',
-  }),
-]);
-
-export const COMPILED_EXTENSION_SUFFIXES = Object.freeze(['.pyd', '.so', '.dylib']);
-
-// Rust native targets are separate from the Cython targets above: the source
-// is a Rust crate under native/, the artifact is a cdylib renamed to the
-// Python extension module name, and the Python fallback lives in a separate
-// module that the import owner selects when the compiled module is absent.
+// Rust native targets: the source is a Rust crate under native/, the
+// artifact is a cdylib renamed to the Python extension module name, and the
+// Python fallback lives in a separate module that the import owner selects
+// when the compiled module is absent.
 export const RUST_NATIVE_MODULES = Object.freeze([
   Object.freeze({
     id: 'terrain_native',
@@ -46,12 +26,12 @@ export const RUST_NATIVE_MODULES = Object.freeze([
     fallbackModuleName: 'ludoxel.simulation.spaces.othello.engines.search',
   }),
   Object.freeze({
-    id: 'frustum_native',
-    crateDirectory: 'native/ludoxel_frustum',
-    crateName: 'ludoxel_frustum',
-    moduleName: 'ludoxel.foundations.mathematics.frustums._frustum_native',
-    artifactStem: '_frustum_native',
-    installDirectory: 'src/ludoxel/foundations/mathematics/frustums',
-    fallbackModuleName: 'ludoxel.foundations.mathematics.frustums.clip',
+    id: 'mathematics_native',
+    crateDirectory: 'native/ludoxel_mathematics',
+    crateName: 'ludoxel_mathematics',
+    moduleName: 'ludoxel.foundations.mathematics._mathematics_native',
+    artifactStem: '_mathematics_native',
+    installDirectory: 'src/ludoxel/foundations/mathematics',
+    fallbackModuleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
   }),
 ]);

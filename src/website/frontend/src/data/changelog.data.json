@@ -2,6 +2,42 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.7",
+      "tags": ["Desktop Application", "Build", "Rendering", "Audio", "Settings"],
+      "sections": [
+        {
+          "title": "Ray-AABB, DDA, View Angles, and Frustum Culling Move to a Rust Mathematics Crate",
+          "items": [
+            "`native/ludoxel_mathematics/` replaces the Cython build path for `foundations/mathematics/geometry/ray_aabb.py`, `voxels/dda.py`, and `linear/view_angles.py`, and absorbs the standalone `native/ludoxel_frustum/` crate that previously held only `chunks_intersect_clip_volume_batch`. `src/lib.rs` exposes `ray_aabb_face`, a batched `dda_grid_traverse_batch` that packs its results as bytes and releases the GIL through `py.detach()`, the sun/view-angle conversions, the frustum batch entry point, and the `mat4_*` matrix builders `linear/transform_matrices.py` previously computed in Python. Each function keeps the exact input/output contract of the Python module it replaces, matched vertex for vertex against a parity script covering negative coordinates, chunk boundaries, degenerate rays, and DDA axis ties.",
+            "`foundations/mathematics/_native.py` is the single loader every mathematics submodule imports: it resolves `_mathematics_native` once and exposes availability and status helpers. `geometry/native.py`, `voxels/native.py`, `linear/native.py`, and `frustums/native.py` each call through that loader and fall back to their pure-Python module when the compiled extension is absent, so a source tree without a Rust build still runs. Every caller across picking, player and AI movement, camera composition, HUD crosshair axes, chunk visibility, and the OpenGL/WGPU backends now imports from these `.native` modules instead of the Cython-candidate or fallback modules directly.",
+            "`tools/build_native_extensions/` drops its Cython collection, build-script, and verification paths entirely; `build.service.mjs`, `verify.service.mjs`, and `list.service.mjs` now dispatch only to the Rust crate build under `native/`, and `cli/help/message.help.mjs` lists the three real crates (`terrain_native`, `othello_native`, `mathematics_native`). `pyproject.toml`, `MANIFEST.in`, and `.gitignore` package `_mathematics_native` in place of the removed `_frustum_native`, and `tools/build_desktop_app/`'s PyInstaller hidden-imports list follows the same swap."
+          ]
+        },
+        {
+          "title": "Chunk Upload Drops a Redundant Visible-Chunk Pass and Memoizes Full-Cube Occlusion",
+          "items": [
+            "`WorldUploadTracker._content_chunks_with_keep` in `src/ludoxel/presentation/rendering/uploads/world.py` replaces two separate calls to `WorldState.visible_content_chunk_keys`, one at the render radius and one at the larger keep radius, with a single call at the keep radius followed by a distance filter for the render-radius subset. The keep radius is always the larger of the two, and every branch of `visible_content_chunk_keys` gates on that same radius, so the render-radius result is a strict subset reachable by filtering rather than a second grid walk.",
+            "`_state_is_full_cube_solid` in `src/ludoxel/presentation/rendering/faces/visible.py` memoizes `parse_state` plus the block-registry lookup per `(resolver, state string)` pair behind `_FULL_CUBE_SOLID_CACHE`, so `iter_visible_faces`' occlusion check reuses the result across the repeated state strings (`stone`, `dirt`, and similar) that dominate a chunk's exposed blocks instead of re-parsing and re-resolving them per face per candidate direction.",
+            "Raising `_MESH_BUILD_WORKER_COUNT` above 1 was considered and rejected for this release: `build_chunk_face_sources`' per-face Python loop (`parse_state`, occlusion checks, UV/texture-hash lookups) dominates a chunk build and holds the GIL for nearly all of it, leaving too small a GIL-released slice for a second worker thread to overlap profitably rather than add contention. The worker count stays at 1, and the reasoning is recorded next to the constant in `uploads/world.py`."
+          ]
+        },
+        {
+          "title": "Shadow Bias Tightened at a Caster's Convex Silhouette Edge",
+          "items": [
+            "`bias_slope` and `poly_offset_factor`/`poly_offset_units` on `BackendShadowParams` in `src/ludoxel/presentation/rendering/contracts/config.py` drop from `0.00035` and `0.50`/`0.75` to `0.00018` and `0.35`/`0.50`. `bias_slope` sets the flat receiver-side bias `shadow_factor` in `world.frag` subtracts from the compared depth before its hardware shadow-comparison sample; `poly_offset_factor`/`poly_offset_units` set the caster-side `glPolygonOffset` the OpenGL shadow-map pass applies while rendering casters into the depth texture, and WGPU carries the same two fields as `depth_bias_slope_scale`/`depth_bias` on its shadow pipelines in `backends/wgpu/runtime/backend.py`. Both push a fragment's compared depth toward reading as lit, and that push runs along the light's depth axis rather than across the shadow map's texel grid, so lowering it narrows the lit gap beside a caster's own convex silhouette edge, the corner `SHADOW_NORMAL_OFFSET_TEXELS`'s receiver-side offset does not reach.",
+            "The sample this bias feeds is itself filtered through a 3x3 box kernel, or, at Ultra quality, the 16-tap Vogel-disk kernel in `common/shadow_filtering.glsl`, so the visible shadow edge is soft rather than a sharp boundary at the caster's silhouette; the lowered values narrow the lit gap beside a caster's base without producing pixel-exact contact between the caster and its own shadow. Pushing either value further toward zero keeps narrowing that gap but starts reintroducing self-shadow speckling on flat or gently sloped ground, so `0.00018`/`0.35`/`0.50` is a deliberate midpoint between the two failure modes, not a value derived from a specific measured threshold."
+          ]
+        },
+        {
+          "title": "Settings, Othello Settings, and the AI Settings Dialog Suspend Gameplay Audio Like Pause",
+          "items": [
+            "`ViewportOverlayMixin._gameplay_suspended` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` is now the single condition for whether the fixed-step simulation runs and whether gameplay audio plays: loading, Pause, the main menu, normal Settings, Othello Settings, the AI Settings dialog, and an open `themed_notice_dialog` transient modal all satisfy it. `render_loop/loop.py`'s `_tick_sim` and `_on_step` call this one method instead of repeating the same six-condition boolean, so the simulation gate and the audio gate cannot drift apart the way they had when only `settings_open()` was missing from the ambient-audio check.",
+            "`AudioManager.set_gameplay_audio_suspended` in `src/ludoxel/presentation/audio/playback/manager.py` replaces the direct `set_ambient_active` call `_sync_gameplay_hud_visibility` made on every overlay transition. On the suspend edge it stops the ambient loop through the existing `set_ambient_active` path and also stops every in-progress block, player, and interaction effect voice across `_prepared_sources`, plus the player-attack `PcmOneShotMixer`'s active voices through its new `stop_active_voices` method, so a footstep or block-break sound already playing when Settings opens does not keep sounding underneath the menu. Resuming re-arms the ambient loop through the same preference-aware path and starts nothing else on its own, so no suppressed event plays back late."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.6 Hotfix 1",
       "tags": ["Desktop Application", "Rendering", "Block Placement"],
       "sections": [

@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO
-from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, identity_matrix, scale_matrix, translate_matrix
+from ludoxel.foundations.mathematics.linear.native import compose_matrices, identity_matrix, scale_matrix, translate_matrix
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Z
 from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT

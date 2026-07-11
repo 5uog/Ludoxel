@@ -145,9 +145,24 @@ class BackendShadowParams:
   dark_mul: float = 0.20
   cull_front: bool = False
   bias_min: float = 0.00003
-  bias_slope: float = 0.00035
-  poly_offset_factor: float = 0.50
-  poly_offset_units: float = 0.75
+  # bias_slope and poly_offset_factor/units (below) both push a fragment's compared depth
+  # toward reading as lit -- shadow_sample in world.frag subtracts bias_slope's contribution
+  # before its comparison sample, and poly_offset_factor/units push the caster's own rasterized
+  # depth away from the light while the shadow map is built. That push runs along the light's
+  # depth axis, not across the shadow map's texel grid, so it widens fastest at a caster's own
+  # convex silhouette edge -- a lone block's corner, not the concave notches
+  # SHADOW_NORMAL_OFFSET_TEXELS targets -- leaving ground right next to the corner too bright
+  # relative to the shadow's interior. The sample this bias feeds is filtered (a 3x3 box, or the
+  # 16-tap Vogel disk at Ultra quality; see common/shadow_filtering.glsl), so the visible edge is
+  # soft rather than a sharp boundary at the silhouette regardless of how tightly this bias is
+  # tuned: lowering it narrows the lit gap without producing pixel-exact contact between a
+  # caster and its own shadow. Pushing it further toward zero keeps narrowing that gap but
+  # starts reintroducing self-shadow speckling on flat or gently sloped ground, so these values
+  # are a deliberate midpoint between the two failure modes, not a value derived from a specific
+  # measured threshold.
+  bias_slope: float = 0.00018
+  poly_offset_factor: float = 0.35
+  poly_offset_units: float = 0.50
   coverage_radius: float = 40.0
   pcf_radius: float = 0.85
   ultra_filter: bool = False

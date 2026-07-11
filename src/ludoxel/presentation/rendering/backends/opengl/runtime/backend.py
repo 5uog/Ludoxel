@@ -55,7 +55,7 @@ from OpenGL.GL import (
 )
 from PyQt6.QtGui import QImage
 
-import ludoxel.foundations.mathematics.linear.mat4 as mat4
+import ludoxel.foundations.mathematics.linear.native as mat4
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.chunks.grid import ChunkKey
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3

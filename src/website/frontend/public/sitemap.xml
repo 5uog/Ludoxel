@@ -2116,10 +2116,10 @@
     <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/understanding-native-extension-fallbacks#understanding-native-extension-fallbacks-owner-files</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/understanding-native-extension-fallbacks#understanding-native-extension-fallbacks-suffix-detection</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/understanding-native-extension-fallbacks#understanding-native-extension-fallbacks-guarded-import</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/understanding-native-extension-fallbacks#understanding-native-extension-fallbacks-build-and-verify</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/understanding-native-extension-fallbacks#understanding-native-extension-fallbacks-verify</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/understanding-native-extension-fallbacks#understanding-native-extension-fallbacks-package-effect</loc>
@@ -2326,22 +2326,25 @@
     <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-othello-engine-extension#see-also</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#building-the-rust-frustum-extension-crate-and-contract</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension#building-the-rust-mathematics-extension-crate-and-contract</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#building-the-rust-frustum-extension-build-and-placement</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension#building-the-rust-mathematics-extension-per-function-contracts</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#building-the-rust-frustum-extension-verification</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension#building-the-rust-mathematics-extension-build-and-placement</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#building-the-rust-frustum-extension-runtime-and-package</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension#building-the-rust-mathematics-extension-verification</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#see-also</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension#building-the-rust-mathematics-extension-runtime-and-package</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/legal/license-authority-and-materials/authority-text/understanding-license-authority</loc>

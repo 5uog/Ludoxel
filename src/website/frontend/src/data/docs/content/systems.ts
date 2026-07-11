@@ -690,7 +690,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
     group: 'Preferences and Input Boundaries',
     title: 'Understanding Overlay Input Blocking',
     description:
-      'Documents the overlay state machine and the input gate: every overlay transition and its capture handling, the resume path, the transient-modal counter, the loop predicates that freeze stepping, the precise inventory exception, and the visibility and ambient-audio predicates that deliberately diverge.',
+      'Documents the overlay state machine and the input gate: every overlay transition and its capture handling, the resume path, the transient-modal counter, the shared suspension predicate that gates both simulation stepping and gameplay audio, the precise inventory exception, and the narrower HUD-visibility predicate that still diverges from it.',
     sections: [
       {
         id: 'overlay-input-blocking-state-machine',
@@ -712,23 +712,31 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The simulation is gated in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py`. Both `_tick_sim`, which drives the runner, and `_on_step`, the step callback, early-return under the same conditions, so neither the accumulator nor the domain advance proceeds while an overlay holds.',
+            text: '`ViewportOverlayMixin._gameplay_suspended` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` is the single predicate the simulation gate and the gameplay-audio gate both call, so the two cannot drift apart the way they once could when each maintained its own condition list. `render_loop/loop.py`’s `_tick_sim`, which drives the runner, and `_on_step`, the step callback, both early-return when this one method reports true, so neither the accumulator nor the domain advance proceeds while an overlay holds.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'src/ludoxel/presentation/interface/viewport/render_loop/loop.py',
-            code: `if (
-  bool(self.loading_active())
-  or bool(getattr(self, "_ai_settings_overlay_open", False))
-  or bool(self._transient_modal_active())
-  or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open())
-):
+            caption: 'src/ludoxel/presentation/interface/viewport/overlays/state.py and render_loop/loop.py',
+            code: `def _gameplay_suspended(self) -> bool:
+  return bool(
+    self.loading_active()
+    or self._overlays.dead()
+    or self._overlays.paused()
+    or self._overlays.menu_open()
+    or self._overlays.settings_open()
+    or self._overlays.othello_settings_open()
+    or bool(getattr(self, "_ai_settings_overlay_open", False))
+    or bool(self._transient_modal_active())
+  )
+
+# render_loop/loop.py
+if bool(getattr(self, "_shutdown_done", False)) or bool(self._gameplay_suspended()):
   return`,
           },
           {
             kind: 'paragraph',
-            text: 'When the predicate holds, the runner receives no update and stepping halts, freezing gravity, movement, AI actors, and the simulation clock. The pause overlay, death overlay, settings overlay, Othello settings overlay, AI settings dialog flag, a transient modal counted by `_begin_transient_modal` and `_end_transient_modal`, and loading state each independently halt stepping.',
+            text: 'When the predicate holds, the runner receives no update and stepping halts, freezing gravity, movement, AI actors, and the simulation clock. The pause overlay, the main menu, the death overlay, the settings overlay, the Othello settings overlay, the AI settings dialog flag, a transient modal counted by `_begin_transient_modal` and `_end_transient_modal`, and loading state each independently satisfy the predicate and halt stepping.',
           },
         ],
       },
@@ -764,7 +772,11 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_gameplay_hud_active`, `_debug_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, and route overlay when an overlay, chat, or HUD-hidden state removes the gameplay surface. Player and AI name tags are no longer Qt overlay labels; `_build_world_name_tags` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` sends them to the backend renderer as world-space name tag states, so chat, pause, settings, AI settings, and inventory surfaces stay above them through normal widget composition. The route overlay has a separate content gate: draft route-edit feedback can show while editing, while completed route paths require the F3 Debug HUD to be visible. `_ambient_audio_active` is narrower: loading, death, pause, and Othello settings stop the ambient source, while the inventory, chat, HUD-hidden state, ordinary settings surface, and AI settings surface leave the My World ambient loop under the same `AudioManager` key. The inventory therefore behaves as an input-neutral storage surface, not as an audio reset boundary. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
+            text: '`_gameplay_hud_active`, `_debug_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, and route overlay when an overlay, chat, or HUD-hidden state removes the gameplay surface. `_gameplay_hud_active` is strictly narrower than `_gameplay_suspended`: it additionally hides the HUD for an open inventory and an open chat, neither of which suspends stepping or audio, so a player can still see the world move and hear it while reading the inventory or typing a chat line, with the gameplay HUD simply out of the way. Player and AI name tags are no longer Qt overlay labels; `_build_world_name_tags` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` sends them to the backend renderer as world-space name tag states, so chat, pause, settings, AI settings, and inventory surfaces stay above them through normal widget composition. The route overlay has a separate content gate: draft route-edit feedback can show while editing, while completed route paths require the F3 Debug HUD to be visible.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Gameplay audio no longer maintains a narrower condition list of its own. `_sync_gameplay_hud_visibility` calls `AudioManager.set_gameplay_audio_suspended(current_space_id=..., suspended=bool(self._gameplay_suspended()))` on every overlay transition, so ambient audio, and every in-progress block, player, and interaction effect voice, stop under exactly the conditions that stop the simulation: loading, Pause, the main menu, ordinary Settings, Othello Settings, the AI Settings dialog, and an open transient modal all suspend audio the same way they suspend stepping. `set_gameplay_audio_suspended` in `src/ludoxel/presentation/audio/playback/manager.py` re-arms the ambient loop through the existing `set_ambient_active` path on the resume edge and starts nothing else on its own, so no sound suppressed mid-playback plays back late. The inventory and chat overlays are absent from `_gameplay_suspended`, so they remain audio-neutral exactly as they remain stepping-neutral: opening the inventory or chat continues the world, its ambient loop, and its sound effects, and only removes the gameplay HUD and player input. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
           },
           {
             kind: 'paragraph',
@@ -773,7 +785,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         ],
       },
     ],
-    relatedTitles: ['Using the Inventory Overlay', 'Recovering after Death', 'Understanding Keybind Resolution', 'Understanding the Chat Runtime and Command Routing'],
+    relatedTitles: ['Using the Inventory Overlay', 'Recovering after Death', 'Understanding Keybind Resolution', 'Understanding the Chat Runtime and Command Routing', 'Understanding Ambient Sounds'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1501,6 +1513,10 @@ def mix_uint64(*values: int) -> int:
             kind: 'paragraph',
             text: '`shadow_normal_offset_world_units` in `src/ludoxel/presentation/rendering/contracts/config.py` computes a per-tier normal-offset bias: `SHADOW_NORMAL_OFFSET_TEXELS` (0.5) times the active preset’s world-space texel size, `2 * coverage_radius / size`. `world.vert` and `othello.vert` add that offset, scaled by the vertex normal, to the world position before the light-space transform that produces `v_lightPos`, so the fragment shader samples the shadow map at a point pushed slightly off the receiving surface instead of at the surface itself. A concave junction between two block faces, such as a trench corner or an inside wall meeting a floor, otherwise reads as fully lit because the flat slope bias in `shadow_factor` alone cannot distinguish that geometry from a grazing but unoccluded surface; the normal offset closes that gap without relying on a larger flat bias, which would widen the acne-versus-peter-panning margin at every silhouette instead of only at concave junctions. The offset is kept to half a texel because Ludoxel’s sun sits at a low, often-grazing elevation: on a near-horizontal receiver such as grass or a floor, whose normal points close to perpendicular to the sun direction, an offset along that normal projects into light space mostly as a shift across the shadow map and only slightly as a shift in depth, so a larger value visibly detaches a caster’s shadow from its own base before it meaningfully helps a corner.',
           },
+          {
+            kind: 'paragraph',
+            text: '`bias_min` and `bias_slope` on the same `BackendShadowParams` set the flat receiver-side bias `shadow_factor` subtracts from the compared depth in `world.frag` before its hardware shadow-comparison sample, and `poly_offset_factor`/`poly_offset_units` set the caster-side `glPolygonOffset` the OpenGL shadow-map pass applies while rendering casters into the depth texture; WGPU carries the same two values as `depth_bias_slope_scale` and `depth_bias` on its shadow pipelines in `backends/wgpu/runtime/backend.py`, so both backends push a fragment toward reading as lit by the same amount. That push runs along the light’s depth axis, not across the shadow map’s texel grid, so it widens fastest at a lone block’s own convex silhouette edge, the corner the normal offset above does not touch because that offset only displaces the receiver: ground immediately beside the block reads brighter relative to the shadow’s interior than the bias contributes anywhere else on the receiver. The sample this bias feeds is itself filtered, through the shared 3x3 box kernel or, at Ultra quality, the 16-tap Vogel-disk kernel in `common/shadow_filtering.glsl` covered below, so the visible edge stays soft rather than a sharp boundary at the caster’s silhouette no matter how the bias is tuned; 3.8.7 lowers `bias_slope` and `poly_offset_factor`/`poly_offset_units` from `0.00035` and `0.50`/`0.75` to `0.00018` and `0.35`/`0.50`, narrowing the lit gap beside a caster’s base without producing pixel-exact contact between the caster and its own shadow. Pushing either value further toward zero keeps narrowing that gap but starts reintroducing self-shadow speckling on flat or gently sloped ground at grazing sun angles, so the current values are a deliberate midpoint between the two failure modes recorded next to the fields in `contracts/config.py`, not a value derived from a specific measured threshold.',
+          },
         ],
       },
       {
@@ -2216,7 +2232,15 @@ self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0
         content: [
           {
             kind: 'paragraph',
-            text: '`ambient_desired_key` in `src/ludoxel/presentation/audio/playback/ambient.py` returns the My World key when ambient audio is enabled and the current play space is My World; every other play-space key resolves to no ambient key. The viewport supplies the enabled flag and current space through `AudioManager.set_ambient_active`. `_ambient_audio_active` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` withholds that flag during loading, death, pause, and Othello settings, but it does not treat the inventory or chat as an ambient reset boundary. Effective volume is the product of master and ambient-category gain; an inaudible gain or absent key stops the effect and clears its source.',
+            text: [
+              '`ambient_desired_key` in `src/ludoxel/presentation/audio/playback/ambient.py` returns the My World key when ambient audio is enabled and the current play space is My World; every other play-space key resolves to no ambient key. The viewport supplies the enabled flag and current space through `AudioManager.set_gameplay_audio_suspended`, which derives `enabled` as the negation of `ViewportOverlayMixin._gameplay_suspended` and forwards it to the same `set_ambient_active` this section describes below. That predicate withholds the enabled flag during loading, death, pause, the main menu, ordinary Settings, Othello Settings, the AI Settings dialog, and an open transient modal — the identical condition set that halts simulation stepping, documented in full in ',
+              {
+                kind: 'link',
+                label: 'overlay input blocking',
+                href: '/docs/systems/runtime-and-render-state/preferences-and-input-boundaries/understanding-overlay-input-blocking',
+              },
+              ' — but it does not treat the inventory or chat as an ambient reset boundary, so opening either one leaves the My World loop running. Effective volume is the product of master and ambient-category gain; an inaudible gain or absent key stops the effect and clears its source.',
+            ],
           },
         ],
       },
@@ -2275,7 +2299,7 @@ self._ambient_transitioning = False`,
         ],
       },
     ],
-    relatedTitles: ['Changing Audio Preferences', 'Supplying Platform Evidence', 'Understanding Material Sounds'],
+    relatedTitles: ['Changing Audio Preferences', 'Supplying Platform Evidence', 'Understanding Material Sounds', 'Understanding Overlay Input Blocking'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -2754,7 +2778,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.6+hotfix.1"`,
+            code: `__version__ = "3.8.7"`,
           },
           {
             kind: 'note',
@@ -2928,7 +2952,15 @@ def normalized(self) -> "Vec3":
           },
           {
             kind: 'paragraph',
-            text: '`tools/build_native_extensions/src/config/native.config.mjs` registers `src/ludoxel/foundations/mathematics/linear/view_angles.py`, `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py`, and `src/ludoxel/foundations/mathematics/voxels/dda.py` as native-build candidates under their existing module names. The generated build script passes each source path to `Extension` and `cythonize` in place; verification reports that the Python fallback source exists when no `.pyd`, `.so`, or `.dylib` binary is found beside that source. The Python files therefore define the fallback contract from which those candidates are built. Candidate registration does not independently prove native semantic parity, backend correctness, or availability on every target.',
+            text: [
+              'Every caller of `forward_from_yaw_pitch_deg`, `yaw_pitch_deg_from_forward`, and `sun_dir_from_az_el_deg` reaches them through `src/ludoxel/foundations/mathematics/linear/native.py`, not through `view_angles.py` directly. `linear/native.py` imports a shared `_native.py` loader that resolves the `_mathematics_native` compiled module inside a `try`/`except ImportError` at import time; when the compiled module is present it calls the matching Rust function and reassembles the returned scalars into a `Vec3` or degree pair, and when it is absent it calls straight through to `view_angles.py`. `view_angles.py` above is therefore the fallback contract and not dead code: it is the reference implementation the Rust functions are matched against and the runtime path a source tree without a Rust build still executes. The crate, its build path, and its packaging are covered in ',
+              {
+                kind: 'link',
+                label: 'Building the Rust Mathematics Extension',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension',
+              },
+              '.',
+            ],
           },
         ],
       },
@@ -2938,7 +2970,7 @@ def normalized(self) -> "Vec3":
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/foundations/mathematics/linear/mat4.py` returns `numpy` 4-by-4 `float32` arrays for identity, perspective, orthographic, and look-direction matrices. Perspective derives its focal factor from half of the supplied vertical field of view and floors only the aspect denominator at `1e-9`; `look_dir` normalizes the forward and derived basis vectors before placing basis rows and eye translation into the matrix. `mul` computes `a @ b` and casts that product to `float32`. The OpenGL frame pipeline consumes the functions to form view-projection and light view-projection matrices, while the WGPU backend converts the resulting clip representation for its uniform layout. This file constructs arrays; it does not issue a draw pass.',
+            text: '`src/ludoxel/foundations/mathematics/linear/mat4.py` returns `numpy` 4-by-4 `float32` arrays for identity, perspective, orthographic, and look-direction matrices. Perspective derives its focal factor from half of the supplied vertical field of view and floors only the aspect denominator at `1e-9`; `look_dir` normalizes the forward and derived basis vectors before placing basis rows and eye translation into the matrix. `mul` computes `a @ b` and casts that product to `float32`. The OpenGL frame pipeline and the WGPU backend both call these constructors through `src/ludoxel/foundations/mathematics/linear/native.py`, which routes each call to the compiled `_mathematics_native` Rust function when it is present and to this module otherwise; every `mat4_*` Rust function returns sixteen little-endian `float32` bytes in the same row-major order this module writes, so the formulas below describe both implementations, not only the fallback. This file constructs arrays; it does not issue a draw pass.',
           },
           {
             kind: 'math',
@@ -3170,11 +3202,11 @@ if int(lx) >= int(CHUNK_SIZE - 1):
           {
             kind: 'paragraph',
             text: [
-              '`select_visible_chunks` reaches this test through `native.py` in the same package, which imports `chunks_intersect_clip_volume_batch` and tries `ludoxel.foundations.mathematics.frustums._frustum_native` at import time, holding the result in a module-level reference. When that compiled extension is present, `native.py` packs the candidate keys and matrix into little-endian byte buffers, calls the compiled function, and reinterprets its returned bytes as a `numpy.bool_` array; when it is absent, `native.py` calls straight through to the `clip.py` implementation above with no behavior difference beyond speed. Both the world pass and the shadow pass reach this dispatch on every drawn frame through `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py`. The crate, its build path, and its packaging are covered in ',
+              '`select_visible_chunks` reaches this test through `native.py` in the same package, which imports `chunks_intersect_clip_volume_batch` and reads a shared `native_module` reference from `ludoxel.foundations.mathematics._native` — the same loader every foundations-mathematics selector module imports, resolving the single compiled extension `_mathematics_native` at that module’s import time rather than each caller trying its own separate import. When that compiled extension is present, `frustums/native.py` packs the candidate keys and matrix into little-endian byte buffers, calls the compiled function, and reinterprets its returned bytes as a `numpy.bool_` array; when it is absent, it calls straight through to the `clip.py` implementation above with no behavior difference beyond speed. Both the world pass and the shadow pass reach this dispatch on every drawn frame through `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py`. This function shares its compiled module with the ray-AABB, DDA, view-angle, and matrix functions the rest of this article and the transform-matrix section below cover; the crate, its build path, and its packaging are covered in ',
               {
                 kind: 'link',
-                label: 'Building the Rust Frustum Extension',
-                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension',
+                label: 'Building the Rust Mathematics Extension',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension',
               },
               '.',
             ],
@@ -3190,7 +3222,7 @@ if int(lx) >= int(CHUNK_SIZE - 1):
         ],
       },
     ],
-    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Building in My World'],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Building the Rust Mathematics Extension'],
   }),
   defineDocsArticle({
     category: 'Systems',

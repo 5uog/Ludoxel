@@ -14,8 +14,8 @@ import ludoxel.presentation.interface.viewport.controllers.effects as effects_co
 import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_THIRD_PERSON_BACK, CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.presentation.audio import PLAYER_EVENT_DAMAGE_HIT, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
 from ludoxel.presentation.rendering.visuals.name_tags import NAME_TAG_ANCHOR_OFFSET_BLOCKS, NAME_TAG_CROUCH_ANCHOR_OFFSET_BLOCKS, NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS, NameTagRenderState
@@ -272,24 +272,14 @@ class ViewportRenderLoopMixin:
     self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
   def _tick_sim(self: "GLViewportWidget") -> None:
-    if (
-      bool(getattr(self, "_shutdown_done", False))
-      or (not bool(getattr(self, "_runtime_active", False)))
-      or (not bool(self.isVisible()))
-      or bool(self.loading_active())
-      or bool(getattr(self, "_ai_settings_overlay_open", False))
-      or bool(self._transient_modal_active())
-      or (self._overlays.dead() or self._overlays.paused() or self._overlays.menu_open() or self._overlays.settings_open() or self._overlays.othello_settings_open())
-    ):
+    if bool(getattr(self, "_shutdown_done", False)) or (not bool(getattr(self, "_runtime_active", False))) or (not bool(self.isVisible())) or bool(self._gameplay_suspended()):
       return
 
     self._runner.update()
     self._request_viewport_render()
 
   def _on_step(self: "GLViewportWidget", dt: float) -> None:
-    if bool(getattr(self, "_shutdown_done", False)):
-      return
-    if bool(self.loading_active()) or bool(getattr(self, "_ai_settings_overlay_open", False)) or bool(self._transient_modal_active()) or (self._overlays.dead() or self._overlays.paused() or self._overlays.menu_open() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
+    if bool(getattr(self, "_shutdown_done", False)) or bool(self._gameplay_suspended()):
       return
     othello_controller.consume_pending_ai_result(self)
     self._update_block_break_particles(float(dt))

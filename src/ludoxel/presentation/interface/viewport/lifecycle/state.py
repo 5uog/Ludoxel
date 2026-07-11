@@ -14,8 +14,8 @@ import ludoxel.presentation.interface.viewport.controllers.settings as settings_
 from ludoxel.application.persistence.schedulers.state import save_state
 from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_TIMO
 from ludoxel.application.preferences.runtime import RuntimePreferences
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.presentation.interface.menu.thumbnail import capture_widget_thumbnail_image, encode_thumbnail_png
 from ludoxel.presentation.rendering.visuals.cameras.third_person import resolve_camera

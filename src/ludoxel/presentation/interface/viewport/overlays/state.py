@@ -241,8 +241,15 @@ class ViewportOverlayMixin:
   def _debug_hud_active(self: "RendererViewportWidget") -> bool:
     return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
-  def _ambient_audio_active(self: "RendererViewportWidget") -> bool:
-    return bool((not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.menu_open()) and (not self._overlays.othello_settings_open()))
+  def _gameplay_suspended(self: "RendererViewportWidget") -> bool:
+    # This is the single suspension contract shared by the fixed-step simulation gate
+    # (render_loop/loop.py's _tick_sim/_on_step) and gameplay audio: Pause, normal Settings, Othello
+    # Settings, the AI Settings dialog, and any themed_notice_dialog transient modal all stop world
+    # stepping the same way, so they must stop gameplay audio the same way too, instead of ambient
+    # tracking a narrower, separately-maintained condition than the sim gate does.
+    return bool(
+      self.loading_active() or self._overlays.dead() or self._overlays.paused() or self._overlays.menu_open() or self._overlays.settings_open() or self._overlays.othello_settings_open() or bool(getattr(self, "_ai_settings_overlay_open", False)) or bool(getattr(self, "_transient_modal_active", lambda: False)())
+    )
 
   def _sync_gameplay_hud_visibility(self: "RendererViewportWidget") -> None:
     show_gameplay_hud = bool(self._gameplay_hud_active())
@@ -295,7 +302,7 @@ class ViewportOverlayMixin:
       self._route_overlay.raise_()
     if bool(show_othello_hud):
       self._othello_hud.raise_()
-    self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(self._ambient_audio_active()))
+    self._audio.set_gameplay_audio_suspended(current_space_id=self._state.current_space_id, suspended=bool(self._gameplay_suspended()))
     self._sync_player_name_overlays()
     self._raise_open_settings_surface()
     chat_controller.sync_visibility(self)

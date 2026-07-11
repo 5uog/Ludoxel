@@ -15,8 +15,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 
 [[package]]
-name = "ludoxel_frustum"
-version = "3.8.6"
+name = "ludoxel_mathematics"
+version = "3.8.7"
 dependencies = [
  "pyo3",
 ]

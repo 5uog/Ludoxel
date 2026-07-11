@@ -7,7 +7,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, rotate_x_deg_matrix, scale_matrix, translate_matrix
+from ludoxel.foundations.mathematics.linear.native import compose_matrices, rotate_x_deg_matrix, scale_matrix, translate_matrix
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.simulation.spaces.othello.game.board import BOARD_SIZE as OTHELLO_BOARD_SIZE, OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y, OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y, square_center
 from ludoxel.simulation.spaces.othello.game.state import BOARD_CELL_COUNT, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, normalize_side

@@ -42,6 +42,7 @@ class AudioManager(QObject):
     self._ambient_space_id: str = ""
     self._ambient_pending_play: bool = False
     self._ambient_transitioning: bool = False
+    self._gameplay_audio_suspended: bool = False
 
     self._pool_specs: dict[str, AudioSamplePool] = self._collect_named_pools()
     self._resolved_urls: dict[str, tuple[QUrl, ...]] = {}
@@ -91,6 +92,7 @@ class AudioManager(QObject):
     self._pool_throttle_until_s.clear()
     self._effects_primed = False
     self._audio_output_refresh_pending = False
+    self._gameplay_audio_suspended = False
 
   def set_preferences(self, preferences: AudioPreferences) -> None:
     self._preferences = preferences.normalized()
@@ -130,6 +132,27 @@ class AudioManager(QObject):
     self._ambient_space_id = str(current_space_id)
     self._ambient_enabled = bool(enabled)
     self._sync_ambient_sound()
+
+  def set_gameplay_audio_suspended(self, *, current_space_id: str, suspended: bool) -> None:
+    # Pause, normal Settings, Othello Settings, the AI Settings dialog, and themed_notice_dialog
+    # transient modals all stop the fixed-step simulation the same way (see
+    # ViewportOverlayMixin._gameplay_suspended), so gameplay audio is suspended and resumed through
+    # this single entry point rather than each caller stopping only the ambient loop and leaving
+    # in-progress block/player/interaction voices to finish on their own. Resuming never replays what
+    # was cut off: it only re-arms the ambient loop and lets new gameplay events play normally.
+    was_suspended = bool(self._gameplay_audio_suspended)
+    self._gameplay_audio_suspended = bool(suspended)
+    self.set_ambient_active(current_space_id=str(current_space_id), enabled=not bool(suspended))
+    if bool(suspended) and not bool(was_suspended):
+      self._stop_in_progress_effect_voices()
+
+  def _stop_in_progress_effect_voices(self) -> None:
+    for prepared_group in tuple(self._prepared_sources.values()):
+      for prepared in tuple(prepared_group):
+        for slot in tuple(prepared.slots):
+          if bool(slot.effect.isPlaying()):
+            slot.effect.stop()
+    self._player_attack_mixer.stop_active_voices()
 
   def play_interaction(self, *, action: str | None, block_state: str | None, position: tuple[int, int, int] | None = None) -> None:
     del position

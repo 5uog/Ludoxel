@@ -23,6 +23,29 @@ class VisibleFace:
   mx: tuple[float, float, float]
 
 
+# Chunk mesh builds run one state string through this check for every candidate face of every
+# exposed block (thousands of calls per chunk, per src/ludoxel/presentation/rendering/faces
+# profiling), and a chunk's exposed blocks are overwhelmingly repeats of a handful of distinct
+# state strings (e.g. "stone", "dirt"), so parse_state + def_lookup + the bool computation is
+# worth memoizing per (def_lookup, state_str). def_lookup is a bound method of the renderer's
+# long-lived BlockVisualResolver; bound methods of the same instance compare and hash equal
+# regardless of attribute-access identity, so this partitions correctly across renderer reloads
+# without needing to track resolver identity explicitly.
+_FULL_CUBE_SOLID_CACHE: dict[tuple[DefLookup, str], bool] = {}
+
+
+def _state_is_full_cube_solid(state_str: str, def_lookup: DefLookup) -> bool:
+  cache_key = (def_lookup, str(state_str))
+  cached = _FULL_CUBE_SOLID_CACHE.get(cache_key)
+  if cached is not None:
+    return cached
+  base, _props = parse_state(str(state_str))
+  defn = def_lookup(str(base))
+  result = bool(defn is not None and bool(defn.is_full_cube) and bool(defn.is_solid))
+  _FULL_CUBE_SOLID_CACHE[cache_key] = result
+  return result
+
+
 def _neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, get_state: GetState, def_lookup: DefLookup) -> bool:
   dx, dy, dz = face_neighbor_offset(int(face_idx))
   nx = int(x) + int(dx)
@@ -33,12 +56,7 @@ def _neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, get_s
   if nst is None:
     return False
 
-  nb, _np = parse_state(str(nst))
-  nd = def_lookup(str(nb))
-  if nd is None:
-    return False
-
-  return bool(nd.is_full_cube) and bool(nd.is_solid)
+  return _state_is_full_cube_solid(str(nst), def_lookup)
 
 
 def _boundary_neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, box: LocalBox, get_state: GetState, def_lookup: DefLookup) -> bool:

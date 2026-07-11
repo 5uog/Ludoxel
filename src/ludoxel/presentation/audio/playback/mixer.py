@@ -62,6 +62,9 @@ class PcmOneShotMixer(QObject):
       self._audio_sink = None
     self._audio_device = None
 
+  def stop_active_voices(self) -> None:
+    self._active.clear()
+
   def retarget_default_audio_output(self) -> None:
     was_active = bool(self._active)
     self._io_device = None

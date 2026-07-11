@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import math
 
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 
 _WORLD_AXES: tuple[Vec3, Vec3, Vec3] = (Vec3(1.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0), Vec3(0.0, 0.0, 1.0))
 _UP_HINT = Vec3(0.0, 1.0, 0.0)
