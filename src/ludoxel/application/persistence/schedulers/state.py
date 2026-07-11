@@ -47,9 +47,6 @@ def _load_player_into_session(*, session: SessionManager, player: PersistedPlaye
 
 
 def _sync_my_world_spawn_settings(session: SessionManager) -> None:
-  # Respawn after death reads SessionSettings.spawn_*, which is fixed at session construction from the startup generation spec. Loading a world with a
-  # different generation (a flat world into a session built for normal terrain, or the reverse) must move the respawn point onto the loaded world's
-  # own spawn column, or a death respawns the player below the loaded surface and the fall repeats.
   spec = session.world.generation_spec()
   spawn = spawn_for_generation(spec)
   session.settings.seed = int(spec.seed)
@@ -71,8 +68,6 @@ def _replace_othello_world(session: SessionManager, persisted_world: PersistedWo
   placed = {(int(key[0]), int(key[1]), int(key[2])): str(value) for (key, value) in persisted_world.placed_blocks.items()}
   broken = tuple(persisted_world.broken_cells)
   if generation.is_static():
-    # Legacy Othello saves persisted a finite materialized static floor. The Othello play space is generation-backed flat terrain: the flat spec owns
-    # the floor, and only placed blocks that differ from the flat base state survive as edits.
     generation = othello_world_generation_spec()
     placed = strip_othello_flat_floor_blocks(placed)
     broken = ()

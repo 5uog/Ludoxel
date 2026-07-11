@@ -1,14 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Amanatides-Woo grid traversal, ported from the Python fallback
-// `dda_grid_traverse` in src/ludoxel/foundations/mathematics/voxels/dda.py.
-// The Python contract is a lazy generator consumed with early `break` once a
-// caller (block picking, camera collision) finds a solid cell; callers never
-// traverse more than a bounded reach/collision distance in one call, so this
-// binding computes the whole bounded cell sequence in one native call instead
-// of round-tripping PyO3 per cell, and the Python selector re-exposes it as a
-// generator over the returned array to preserve the early-break call sites.
 pub const MAX_TRAVERSAL_CELLS: usize = 262_144;
 
 pub struct DdaHit {

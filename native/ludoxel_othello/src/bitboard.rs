@@ -1,13 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Board representation and move generation for the Othello bitboard engine.
-// Bit index i maps to file i % 8 and rank i / 8; the file masks and the eight
-// shift directions are the board geometry the evaluation and search modules
-// read. Every routine here is a pure function of the two side bitboards and
-// mirrors bitboards.py in
-// src/ludoxel/simulation/spaces/othello/engines/.
-
 pub const BOARD_CELL_COUNT: i64 = 64;
 
 const FILE_A: u64 = 0x0101010101010101;

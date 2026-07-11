@@ -32,9 +32,6 @@ _FULL_OCCLUDER_CACHE: dict[str, bool] = {}
 
 
 def _state_is_full_cube_occluder(state_str: str) -> bool:
-  # A cell hides its neighbor's shared face only when a full solid cube fills the cell. Slabs, stairs, fences, fence gates, and walls occupy their
-  # cell without covering a whole face, so they never occlude a neighbor's face and must not count toward burying it. This gate mirrors the renderer's
-  # per-face occlusion, which reads the same block definitions through the shared default registry.
   cached = _FULL_OCCLUDER_CACHE.get(state_str)
   if cached is not None:
     return cached
@@ -314,8 +311,6 @@ class WorldState:
   def _mark_chunks_dirty(self, keys: Iterable[ChunkKey]) -> None:
     for ck0 in keys:
       ck = (int(ck0[0]), int(ck0[1]), int(ck0[2]))
-      # Pristine generation-backed chunks are resident under the implicit revision 1 that chunk_mesh_revision derives from chunk_has_content; the
-      # first edit must therefore advance past that implicit revision, never restart at 1, or resident meshes would treat the edit as already uploaded.
       cur = int(self._effective_chunk_mesh_rev(ck))
       self._chunk_mesh_rev[ck] = int(cur + 1)
       self._dirty_chunks.add(ck)
@@ -483,7 +478,6 @@ class WorldState:
       if key in self._chunk_band_cache:
         return self._chunk_band_cache[key]
     if self._mode_code == MODE_FLAT_CODE:
-      # Flat generation places exactly one solid layer at flat_ground_y and air everywhere else, so the surface envelope collapses to that layer.
       band = (int(self._flat_y), int(self._flat_y))
       with self._lock:
         self._chunk_band_cache[key] = band
@@ -505,7 +499,6 @@ class WorldState:
     return band
 
   def _content_floor_y(self) -> int:
-    # Lowest generated solid cell of any column: the flat layer for flat generation, the bedrock layer for normal generation.
     if self._mode_code == MODE_FLAT_CODE:
       return int(self._flat_y)
     return int(BEDROCK_Y)
@@ -518,9 +511,6 @@ class WorldState:
     band = self._chunk_column_band(int(key[0]), int(key[2]))
     if band is None:
       return False
-    # Generated solid cells span from the content floor up to the highest surface of the column band, so any chunk inside that span holds content:
-    # interior chunks mesh to zero faces until an edit or a neighboring edit exposes them,
-    # and the bedrock layer meshes its permanently exposed underside exactly like the surface skin.
     y_lo = int(key[1]) * CHUNK_SIZE
     y_hi = y_lo + CHUNK_SIZE - 1
     return int(y_hi) >= int(self._content_floor_y()) and int(y_lo) <= int(band[1])
@@ -530,10 +520,6 @@ class WorldState:
     r = int(max(0, radius))
     out: set[ChunkKey] = set()
 
-    # Surface-envelope and floor-envelope chunks for every column inside the horizontal radius. The whole vertical extent of each column band stays
-    # a candidate: the band is a bounded envelope around the generated surface, and clamping it against the player's chunk Y made the terrain drop out
-    # of the candidate set as soon as the eye crossed a CHUNK_SIZE boundary away from the band. The floor row carries the content floor (bedrock for
-    # normal generation, the flat layer for flat generation), whose underside is the world's permanently exposed bottom skin.
     floor_cy = int(self._content_floor_y()) // int(CHUNK_SIZE)
     for cx in range(ccx - r, ccx + r + 1):
       for cz in range(ccz - r, ccz + r + 1):
@@ -546,16 +532,11 @@ class WorldState:
           out.add((int(cx), int(cy), int(cz)))
         out.add((int(cx), int(floor_cy), int(cz)))
 
-    # Chunks the player occupies or can reach into next; empty ones resolve to mesh revision 0 and are skipped by the upload scheduler.
     for dx in (-1, 0, 1):
       for dy in (-1, 0, 1):
         for dz in (-1, 0, 1):
           out.add((int(ccx + dx), int(ccy + dy), int(ccz + dz)))
 
-    # Every chunk with tracked mesh state: chunks holding placed blocks, chunks holding broken cells, and chunks whose mesh revision advanced because
-    # a neighboring cell edit dirtied them. Without the revision keys, a chunk dirtied only through a neighbor edit (for example the chunk below a
-    # shaft floor) never re-entered the candidate set until it was edited directly. The filter is horizontal only, matching the column envelopes:
-    # a shaft dug from the surface to bedrock stays visible over its whole height while the player stands at either end.
     with self._lock:
       tracked = set(self._chunk_index.keys()) | set(self._broken_chunk_keys) | set(self._chunk_mesh_rev.keys())
     for ck in tracked:
@@ -606,9 +587,6 @@ class WorldState:
 
     materials = terrain_native.terrain_materials(self._seed, self._gen_version, self._mode_code, self._flat_y, x0, y0, z0, n, n, n)
     solid = materials != 0
-    # Occupancy alone cannot decide burial:
-    # a cell can be filled by a slab, fence, or stair that does not cover a whole face, so a full-cube neighbor behind it would still be visible.
-    # `full_occ` tracks only cells filled by a full solid cube, and terrain materials are all full cubes, so it starts from occupancy.
     full_occ = np.array(solid, dtype=bool)
 
     with self._lock:
@@ -643,9 +621,6 @@ class WorldState:
       if code > 0:
         state_at[k] = TERRAIN_MATERIALS[code]
 
-    # A cell is meshed when it holds a block and is not fully buried. It is buried only when it is a full cube itself and every neighbor is a full
-    # cube too; then all six faces are covered. A non-full cube (slab, stair, fence, wall) always keeps interior faces and is never buried, and a full
-    # cube beside any non-full-cube neighbor keeps the face toward that gap, so both are meshed.
     core_occ = solid[1 : n - 1, 1 : n - 1, 1 : n - 1]
     core_full = full_occ[1 : n - 1, 1 : n - 1, 1 : n - 1]
     neighbor_open = (~full_occ[0 : n - 2, 1 : n - 1, 1 : n - 1]) | (~full_occ[2:n, 1 : n - 1, 1 : n - 1]) | (~full_occ[1 : n - 1, 0 : n - 2, 1 : n - 1]) | (~full_occ[1 : n - 1, 2:n, 1 : n - 1]) | (~full_occ[1 : n - 1, 1 : n - 1, 0 : n - 2]) | (~full_occ[1 : n - 1, 1 : n - 1, 2:n])
@@ -687,7 +662,6 @@ class WorldState:
       placed_raw = raw.get("placed", [])
       broken_raw = raw.get("broken", [])
     else:
-      # Legacy `.ldxworld` payload: a materialized block set without a generation spec loads as a static world that keeps every block.
       generation = WorldGenerationSpec.static_spec()
       placed_raw = raw.get("blocks", [])
       broken_raw = []

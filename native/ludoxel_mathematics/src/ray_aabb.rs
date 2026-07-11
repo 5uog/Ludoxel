@@ -1,10 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Single ray-vs-AABB slab test with face-of-entry/exit resolution. Face
-// indices follow the Ludoxel voxel-face contract in
-// src/ludoxel/foundations/mathematics/voxels/faces.py:
-//   0 = +X, 1 = -X, 2 = +Y, 3 = -Y, 4 = +Z, 5 = -Z
 const FACE_POS_X: i32 = 0;
 const FACE_NEG_X: i32 = 1;
 const FACE_POS_Y: i32 = 2;
@@ -64,9 +60,6 @@ fn exit_face_for_axis(axis: usize, inv_dir: f64) -> i32 {
   }
 }
 
-/// Returns (t_enter, point.x, point.y, point.z, face) or None, matching the
-/// contract of the Python fallback `ray_aabb_face` in
-/// src/ludoxel/foundations/mathematics/geometry/ray_aabb.py.
 #[allow(clippy::too_many_arguments)]
 pub fn ray_aabb_face(ox: f64, oy: f64, oz: f64, dx: f64, dy: f64, dz: f64, mnx: f64, mny: f64, mnz: f64, mxx: f64, mxy: f64, mxz: f64) -> Option<(f64, f64, f64, f64, i32)> {
   let o = [ox, oy, oz];

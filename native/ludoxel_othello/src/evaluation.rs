@@ -1,12 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Static and classic-difficulty position evaluation. Every constant, weight,
-// term, and rounding rule mirrors evaluation.py, evaluation_profile.py, and
-// the classic _evaluate / _terminal_score in
-// src/ludoxel/simulation/spaces/othello/engines/. Python `round` rounds ties
-// to even, so every rounded term uses round_ties_even.
-
 use crate::bitboard::{adjacent_bits, bit_count, legal_moves_bitboard, BOARD_CELL_COUNT, CORNERS};
 
 pub const WIN_SCORE: i64 = 1_000_000;
@@ -164,11 +158,6 @@ pub fn evaluate_position(player: u64, opponent: u64, sacrifice_level: i64) -> i6
   score += (disc_score(player, opponent) as f64) * disc_stage_weight * disc_weight;
   round_like_python(score)
 }
-
-// Classic-difficulty evaluation. Every term, float operation order, and
-// terminal value mirrors _evaluate and _terminal_score in
-// src/ludoxel/simulation/spaces/othello/engines/classic.py. Scores are f64
-// because the Python implementation computes float scores.
 
 fn classic_frontier_count(side_bits: u64, occupied: u64) -> i64 {
   let empty = !occupied;

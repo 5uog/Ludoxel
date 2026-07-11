@@ -134,12 +134,6 @@ class AudioManager(QObject):
     self._sync_ambient_sound()
 
   def set_gameplay_audio_suspended(self, *, current_space_id: str, suspended: bool) -> None:
-    # Pause, normal Settings, Othello Settings, the AI Settings dialog, and themed_notice_dialog
-    # transient modals all stop the fixed-step simulation the same way (see
-    # ViewportOverlayMixin._gameplay_suspended), so gameplay audio is suspended and resumed through
-    # this single entry point rather than each caller stopping only the ambient loop and leaving
-    # in-progress block/player/interaction voices to finish on their own. Resuming never replays what
-    # was cut off: it only re-arms the ambient loop and lets new gameplay events play normally.
     was_suspended = bool(self._gameplay_audio_suspended)
     self._gameplay_audio_suspended = bool(suspended)
     self.set_ambient_active(current_space_id=str(current_space_id), enabled=not bool(suspended))
@@ -534,8 +528,6 @@ class AudioManager(QObject):
         return False
       slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), now_s=now_s)
     else:
-      # Every voice of every source is busy.
-      # Admitted events must still be heard, so the oldest voice of the selected source is reclaimed instead of dropping the event.
       prepared = self._pick_prepared_source(str(pool_key), pool, prepared_sources)
       if prepared is None:
         return False

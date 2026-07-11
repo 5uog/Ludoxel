@@ -2,10 +2,6 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-// Rust native targets: the source is a Rust crate under native/, the
-// artifact is a cdylib renamed to the Python extension module name, and the
-// Python fallback lives in a separate module that the import owner selects
-// when the compiled module is absent.
 export const RUST_NATIVE_MODULES = Object.freeze([
   Object.freeze({
     id: 'terrain_native',

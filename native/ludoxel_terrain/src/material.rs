@@ -1,13 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Per-cell material selection: bedrock, surface soil, ravine exposure, stone
-// variants, deepslate transition, and ore placement. Every channel, threshold,
-// depth rule, and material code mirrors terrain_math.py in
-// src/ludoxel/simulation/worlds/generation/; the Python fallback and this
-// module must return identical values for identical inputs. All floating
-// point math is f64.
-
 use crate::height::{ravine_depth, BEDROCK_Y, MODE_FLAT, MODE_STATIC};
 use crate::noise::{hash_u64, value_noise_2d, value_noise_3d};
 

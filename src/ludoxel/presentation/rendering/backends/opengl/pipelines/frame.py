@@ -164,9 +164,7 @@ class FramePipeline:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     ultra_visuals = bool(int(self.state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA))
-    # Draw the veiling glare, the sun disc, and the lens flare as background, before the world pass. All three write no depth and the opaque world
-    # drawn next overdraws them, so world geometry nearer than the sun occludes them at the terrain silhouette instead of the glow being painted over
-    # foreground blocks. A block that hides the sun therefore hides its glare and flare.
+
     if bool(ultra_visuals):
       glare = sun_glare_strength(forward, self.state.sun_dir)
       if glare > 0.0:
@@ -226,9 +224,6 @@ class FramePipeline:
 
     world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + othello_metrics.draw_calls), instances=int(world_metrics.instances + othello_metrics.instances), rendered=bool(world_metrics.rendered or othello_metrics.rendered))
 
-    # Clouds use their own far plane so the cloud fade range is not clipped by the world camera far plane.
-    # The Ultra shadow map quality tier selects the translucent volume path, whose depth writes are off, so the projection difference does not feed
-    # back into the world depth buffer; the lower tiers keep the flat box path.
     cloud_proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(world_near), float(cloud_projection_z_far(int(render_distance_chunks), float(self.cfg.camera.z_far))))
     cloud_vp = mat4.mul(cloud_proj, view)
     self.cloud_pass.draw(eye=eye, view_proj=cloud_vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir, fog=cloud_fog, far_distance=float(cloud_far_distance(int(render_distance_chunks))), ultra=bool(ultra_visuals))

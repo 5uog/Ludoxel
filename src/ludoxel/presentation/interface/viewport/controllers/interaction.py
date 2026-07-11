@@ -1256,8 +1256,6 @@ def _projected_frontier_support_face_candidate(viewport: "RendererViewportWidget
 
 
 def _held_slab_block_id(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine) -> str | None:
-  # A vertical slab pillar packs in 0.5-block units, so it needs the locked slab block id. The lock only reports the committed slab state while the
-  # held block still matches, so this returns None whenever the pillar should fall back to the full-cube advance (non-slab blocks or a changed selection).
   forced = _forced_place_state_for_line(viewport, line)
   if forced is None:
     return None
@@ -1269,9 +1267,6 @@ def _held_slab_block_id(viewport: "RendererViewportWidget", *, line: _PlaceRepea
 
 
 def _perform_vertical_slab_pillar(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, feet_offset: float, block_id: str) -> _RightClickResult:
-  # A slab pillar fills each cell to a double before stepping to the next cell, so held half-blocks stack in continuous 0.5-block units instead of
-  # leaving a 0.5 gap between full-cell steps. The frontier cell carries the leading half (bottom while rising, top while descending); its complement
-  # completes the cell once the player clears it, and only then does the pillar advance.
   step = tuple(int(value) for value in line.step)
   sign = int(step[1])
   max_progress = int(line.max_progress)

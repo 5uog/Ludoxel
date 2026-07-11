@@ -4,9 +4,6 @@
 
 in vec2 v_ndc;
 
-// u_sunNdc: sun screen position in normalized device coords.
-// u_strength: overall flare weight in [0, 1].
-// u_aspect: viewport width / height, keeps ghosts circular.
 uniform vec2 u_sunNdc;
 uniform float u_strength;
 uniform float u_aspect;
@@ -33,11 +30,6 @@ void main() {
     float acc = 0.0;
     vec3 col = vec3(0.0);
 
-    // Ghost discs along the axis through the sun and the screen centre. Each
-    // ghost sits at sun * (1 - t): t = 0 is the sun, t = 1 is the centre, and
-    // t > 1 mirrors past the centre, matching how lens elements reflect the
-    // bright source across the optical axis. Warm and cool tints alternate for
-    // a subtle chromatic variation instead of a rainbow.
     float g0 = ldx_flare_ghost(p, sun * (1.0 - 0.30), 0.050);
     col += warm * g0 * 0.35;
     acc += g0 * 0.35;
@@ -57,7 +49,6 @@ void main() {
     col += cool * g5 * 0.07;
     acc += g5 * 0.07;
 
-    // A soft halo ring around the sun position for the near-source glow.
     float rd = length((p - sun) * vec2(u_aspect, 1.0));
     float halo = exp(-pow((rd - 0.34) * 5.5, 2.0)) * 0.12;
     col += warm * halo;
@@ -68,8 +59,6 @@ void main() {
         discard;
     }
 
-    // Emit the coverage-weighted average tint so the alpha blend does not
-    // darken where several faint ghosts overlap.
     vec3 tint = col / max(acc, 0.0001);
     fragColor = vec4(tint, a);
 }

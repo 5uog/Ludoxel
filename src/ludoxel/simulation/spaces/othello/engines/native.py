@@ -25,16 +25,12 @@ def native_othello_status() -> str:
 
 
 def create_native_insane_search(*, hash_level: int, sacrifice_level: int):
-  # Returns a per-cache native search session owning its own transposition tables, or None when the compiled module is absent;
-  # the pure Python negamax and solve_exact in search.py stay the fallback owners.
   if _native_module is None:
     return None
   return _native_module.InsaneSearch(int(hash_level), int(sacrifice_level))
 
 
 def native_classic_root_scores(player_bits: int, opponent_bits: int, *, depth: int, sacrifice_level: int, budget_s: float | None) -> tuple[tuple[int, float], ...] | None:
-  # Per-root-move scores for the classic difficulties, or None when the compiled module is absent; the pure Python _alpha_beta root loop in classic.py
-  # stays the fallback owner. A deadline overrun raises TimeoutError from the compiled module, matching the fallback.
   if _native_module is None:
     return None
   scores = _native_module.classic_root_scores(int(player_bits), int(opponent_bits), int(depth), int(sacrifice_level), None if budget_s is None else float(budget_s))

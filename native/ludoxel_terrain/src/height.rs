@@ -1,13 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Surface height and ravine carving, plus the generation-mode selectors. The
-// octave amplitudes and wavelengths, the ravine masking and depth, the carved
-// floor, and the flat/static/normal mode rules mirror terrain_math.py in
-// src/ludoxel/simulation/worlds/generation/; the Python fallback and this
-// module must return identical values for identical inputs. All floating
-// point math is f64.
-
 use crate::noise::{smoothstep, value_noise_2d};
 
 pub const BEDROCK_Y: i64 = -65;

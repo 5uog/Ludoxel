@@ -30,10 +30,6 @@ def textured_unit_face_vertices(face_idx: int) -> list[tuple[float, ...]]:
 
 
 def textured_unit_face_wire_vertices(face_idx: int) -> list[tuple[float, ...]]:
-  # Line list of the face's two triangles' edges: the four perimeter edges plus the shared triangulation diagonal (twelve vertices, six segments).
-  # The two triangles are (a, b, c) and (a, c, d), the same split as textured_unit_face_vertices, so their edges are (a, b), (b, c), (c, a),
-  # (a, c), (c, d), (d, a). World blocks in wireframe mode render their triangulated faces in line polygon mode and show exactly this diagonal;
-  # emitting it here gives the merged cloud silhouette the same edge on both the OpenGL and WGPU line paths, which share this vertex list.
   (nx, ny, nz), corners = _unit_face_corners(int(face_idx))
   a, b, c, d = corners
   rows: list[tuple[float, ...]] = []

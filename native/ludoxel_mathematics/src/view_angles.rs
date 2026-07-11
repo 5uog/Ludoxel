@@ -1,9 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Camera/sun direction trigonometry, ported from the Python fallback in
-// src/ludoxel/foundations/mathematics/linear/view_angles.py.
-
 fn normalize3(x: f64, y: f64, z: f64) -> (f64, f64, f64) {
   let n = (x * x + y * y + z * z).sqrt();
   if n <= 1e-12 {

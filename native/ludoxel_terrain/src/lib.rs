@@ -1,18 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// PyO3 binding for the deterministic terrain engine. The compiled module is
-// imported as ludoxel.simulation.worlds.generation._terrain_native and must
-// keep the exact contract of the pure Python fallback in
-// src/ludoxel/simulation/worlds/generation/fallback.py:
-//   surface_heights   -> little-endian i32 bytes, C order, shape (nx, nz)
-//   terrain_materials -> u8 bytes, C order, shape (nx, ny, nz)
-
-// The engine is split by responsibility: `noise` owns the hashing and
-// value-noise primitives, `height` owns surface height, ravine carving, and
-// the generation-mode selectors, and `material` owns per-cell material and ore
-// selection. This module is only the PyO3 binding surface and holds no terrain
-// mathematics.
 mod height;
 mod material;
 mod noise;

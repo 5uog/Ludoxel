@@ -1,23 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// PyO3 binding for the Othello bitboard search engine. The compiled module
-// is imported as ludoxel.simulation.spaces.othello.engines._othello_native
-// and must keep the exact contract of the pure Python implementation in
-// src/ludoxel/simulation/spaces/othello/engines/ (bitboards.py, classic.py,
-// evaluation.py, ordering.py, search.py, transposition.py):
-//   legal_moves_bitboard, apply_move_bits, evaluate_position -> pure values
-//   classic_root_scores -> per-root-move float scores for the classic
-//   difficulties, mirroring _alpha_beta and the root loop of _best_move
-//   InsaneSearch -> negamax / solve_exact over internal transposition
-//   tables that follow the same soft-limit clearing policy; a deadline
-//   overrun raises the builtin TimeoutError, matching check_deadline.
-
-// The engine is split by responsibility: `bitboard` owns the board
-// representation and move generation, `evaluation` owns the static and
-// classic scoring terms, and `search` owns move ordering, alpha-beta /
-// negamax, the exact endgame solve, and the transposition tables. This module
-// is only the PyO3 binding surface and holds no engine logic.
 mod bitboard;
 mod evaluation;
 mod search;
@@ -55,10 +38,6 @@ fn terminal_score(player_bits: u64, opponent_bits: u64) -> i64 {
   evaluation::terminal_score(player_bits, opponent_bits)
 }
 
-// Root scores for the classic difficulties (weak/medium/strong). The result
-// keeps the Python root ordering (position weight descending, index
-// ascending among ties) so the seeded tie selection in classic.py behaves
-// identically on the native and fallback paths.
 #[pyfunction]
 #[pyo3(signature = (player_bits, opponent_bits, depth, sacrifice_level, budget_s=None))]
 fn classic_root_scores(py: Python<'_>, player_bits: u64, opponent_bits: u64, depth: i64, sacrifice_level: i64, budget_s: Option<f64>) -> PyResult<Vec<(u32, f64)>> {

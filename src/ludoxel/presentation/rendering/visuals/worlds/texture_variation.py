@@ -42,10 +42,6 @@ TEXTURE_VARIANT_GROUPS: dict[str, tuple[str, ...]] = {
   "crimson_nylium_top": ("crimson_nylium_top_alt_1", "crimson_nylium_top_alt_2"),
 }
 
-# `dirt_path_top` and `quartz_column_top` are the logical texture identities that `BlockTextures`/`texture_for_face`
-# carry for what ship as the `grass_path_top.png` and `quartz_block_lines_top.png` files; `resolve_block_texture_path`
-# (ludoxel.presentation.resources.asset_roots) is what maps the logical identity to that file at load time. Rotation
-# eligibility below is keyed on the logical identity because that is what flows through this module's inputs.
 ROTATABLE_TEXTURE_NAMES: frozenset[str] = frozenset(
   {
     "clay",

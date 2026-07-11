@@ -3,9 +3,6 @@
 
 const int LDX_SHADOW_ULTRA_TAP_COUNT = 16;
 
-// Vogel-spiral disk offsets (golden-angle polar sampling), unit-disk radius 1.0.
-// Sampler-free by design: only offsets a caller-supplied shadow-map lookup, so it can be
-// shared verbatim by both the OpenGL GLSL and the WGPU GLSL-to-WGSL text adaptation path.
 const vec2 LDX_SHADOW_ULTRA_DISK[16] = vec2[](
     vec2(0.17677670, 0.00000000),
     vec2(-0.22577219, 0.20682582),
@@ -25,8 +22,6 @@ const vec2 LDX_SHADOW_ULTRA_DISK[16] = vec2[](
     vec2(-0.12648677, -0.97608970)
 );
 
-// Interleaved-gradient-noise angle from screen position, so neighboring pixels rotate the
-// disk differently and the fixed 16-tap pattern dithers into soft penumbra instead of banding.
 float ldx_shadow_ultra_angle(vec2 fragCoord) {
     return fract(52.98291893 * fract(dot(fragCoord, vec2(0.06711056, 0.00583715)))) * 6.28318530718;
 }

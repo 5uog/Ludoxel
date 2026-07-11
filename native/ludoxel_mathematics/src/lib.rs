@@ -1,36 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// PyO3 binding surface for the foundations/mathematics processing owned by
-// Rust: ray-AABB face test, DDA voxel traversal, view-angle trigonometry,
-// chunk/clip-volume culling (formerly native/ludoxel_frustum, folded in here
-// because it is the same foundations/mathematics package and does not
-// justify a second compiled module), and 4x4 matrix construction/
-// composition. This module holds no math of its own; each submodule owns
-// its contract and is imported as
-// ludoxel.foundations.mathematics._mathematics_native by the
-// per-subpackage selector modules (geometry/native.py, voxels/native.py,
-// linear/native.py, frustums/native.py), which fall back to the pure
-// Python implementations when this compiled extension is absent.
-
-// foundations/mathematics processing intentionally NOT ported here:
-// - scalars/numeric.py (clampi/clampf/clamp01f/lerpf/round_clampi) and
-//   scalars/smoothing.py (exp_alpha): dozens of call sites do one scalar op
-//   per call inside per-frame hot loops (movement, settings sync, HUD).
-//   Routing each call through PyO3 would add FFI overhead with no
-//   arithmetic to amortize it against.
-// - scalars/coercion.py: coerces an untyped Python `object` with a
-//   try/except default; this is Python dynamic-typing glue, not math.
-// - chunks/grid.py (chunk_key/normalize_chunk_key/chunk_bounds/
-//   neighbor_chunk_keys_for_cell) and scalars/hashing.py
-//   (fnv1a_uint64/mix_uint64/uint64_to_unit_index): called per block/per
-//   face in world and chunk-mesh hot paths. A per-call PyO3 binding here
-//   would regress those hot paths instead of speeding them up; the correct
-//   shape is a batched Rust API alongside the chunk-rebuild pipeline, not a
-//   scalar port of these primitives.
-// - geometry/aabb.py (AABB.intersects) and linear/vec3.py (Vec3 arithmetic):
-//   single-digit-flop dataclass methods called pervasively per ray/per
-//   entity; the same anti-pattern as above.
 mod dda;
 mod frustum;
 mod mat4;
@@ -107,12 +77,6 @@ fn matrix16_from_bytes(bytes: &[u8]) -> PyResult<[f32; 16]> {
   }
   Ok(m)
 }
-
-// `chunk_corners_homogeneous`, `chunk_corners_homogeneous_batch`, and
-// `chunk_intersects_clip_volume` (singular) have no Python caller outside
-// the fallback module itself; they stay internal to this crate and are
-// only reached through `chunks_intersect_clip_volume_batch` below, which is
-// the only frustum entry point `frustums/native.py` actually selects.
 
 #[pyfunction]
 fn chunks_intersect_clip_volume_batch(py: Python<'_>, keys_xyz: &[u8], matrix: &[u8], count: usize) -> PyResult<Py<PyBytes>> {

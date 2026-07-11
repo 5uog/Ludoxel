@@ -20,12 +20,6 @@ from ludoxel.simulation.worlds.config.render_distance import clamp_render_distan
 from ludoxel.simulation.worlds.state.world import WorldState
 
 _KEEP_MARGIN = 2
-# build_chunk_face_sources' per-face Python loop (parse_state, occlusion checks, UV/texture-hash
-# lookups) dominates a chunk build and holds the GIL for nearly all of it; the GIL-released slice
-# (terrain_materials, numpy occupancy ops) is too small a fraction for a second worker thread to
-# overlap profitably, so a second worker mostly adds GIL contention instead of draining the
-# backlog faster. Keep this at 1 unless a future change makes the per-chunk build meaningfully
-# more GIL-released.
 _MESH_BUILD_WORKER_COUNT = 1
 
 
@@ -50,9 +44,6 @@ class WorldUploadTracker:
     self._visible_cache_key: tuple[int, int, int, ChunkKey, int] | None = None
     self._visible_cache_chunks: tuple[ChunkKey, ...] = ()
     self._build_cache: "OrderedDict[tuple[int, ChunkKey, int], _BuildResult]" = OrderedDict()
-    # _store_cached_result runs inside a worker-thread done-callback; with more than one mesh-build
-    # worker, two callbacks can fire on different threads at the same time and mutate this OrderedDict
-    # concurrently with each other and with the main thread's reads in _schedule_build and reset().
     self._build_cache_lock = threading.Lock()
     self._max_cached_results: int = 192
     self._last_scheduled_chunk: ChunkKey | None = None
@@ -170,12 +161,6 @@ class WorldUploadTracker:
     return self._sorted_chunks(candidates, center)
 
   def _content_chunks_with_keep(self, world: WorldState, center: ChunkKey, rd: int, keep_margin: int) -> tuple[list[ChunkKey], set[ChunkKey]]:
-    # visible_content_chunk_keys(center, r) is always a horizontally-bounded subset of
-    # visible_content_chunk_keys(center, R) for R >= r >= 1: every branch of that method (the column-band
-    # loop, the floor row, and the tracked-chunk filter) is gated by abs(dx) <= r / abs(dz) <= r, and the one
-    # radius-independent branch (the immediate 3x3x3 neighborhood around center) is always within radius 1,
-    # which is inside any r >= 1. So the keep-radius call (the larger of the two) can be computed once and the
-    # render-radius result derived by filtering, instead of walking the column-band grid twice per frame.
     r = int(max(0, rd))
     margin = int(max(0, keep_margin))
     keep_radius = r + margin
@@ -316,8 +301,6 @@ class WorldUploadTracker:
     return ", ".join(parts)
 
   def visible_load_progress(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> tuple[int, int]:
-    # The readiness gate covers the full render distance: the loading overlay stays up until every content chunk the renderer will draw is
-    # built and resident, so entering a world does not race the remaining chunk builds during play.
     world_token = self._world_token(world)
     center = self._center_chunk(eye)
     rd = clamp_render_distance_chunks(int(render_distance_chunks))
@@ -342,12 +325,6 @@ class WorldUploadTracker:
     return (int(ready), int(total))
 
   def visible_chunks_ready(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> bool:
-    # Readiness is measured against the same denominator the overlay shows: the visible content chunks that carry a positive mesh revision,
-    # i.e. the chunks the scheduler actually builds and makes resident. The candidate set also holds empty chunks the player can reach into (the
-    # eye's own chunk column resolves to mesh revision 0), and those are skipped by the scheduler and never become resident. Gating completion on the
-    # candidate set being empty therefore stalled forever whenever the only visible content was those revision-0 chunks, holding the loading overlay
-    # at "Selecting world chunks... [pending 0, resident 0]". When no visible chunk carries content to build, there is nothing to upload and loading
-    # is complete; otherwise it waits until every buildable chunk is resident.
     ready, total = self.visible_load_progress(world=world, eye=eye, render_distance_chunks=int(render_distance_chunks))
     return int(ready) >= int(total)
 

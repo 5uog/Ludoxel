@@ -132,12 +132,9 @@ class CloudPass:
       self._invalidate()
       return
 
-    # Three separated paths. Wireframe draws the exterior cell-face edges of the merged cloud footprint (no interior faces); the flat path draws
-    # the same exterior faces solid; the Ultra path raymarches a translucent animated volume through one bounding box per cloud.
     use_volume = bool(ultra) and not bool(self._wireframe)
     mode = "volume" if use_volume else ("wire" if bool(self._wireframe) else "flat")
     if bool(use_volume):
-      # Draw the translucent volumes back to front so a nearer cloud blends over the ones behind it instead of hiding them.
       shapes = sorted(shapes, key=lambda s: -((float(s.bounds.center.x) + float(shift.x) * float(s.bounds.speed_multiplier) - float(eye.x)) ** 2 + (float(s.bounds.center.y) - float(eye.y)) ** 2 + (float(s.bounds.center.z) + float(shift.z) * float(s.bounds.speed_multiplier) - float(eye.z)) ** 2))
     signature = (str(mode), tuple(int(id(shape)) for shape in shapes))
     if self._signature != signature:
@@ -145,7 +142,6 @@ class CloudPass:
       self._signature = signature
 
     glEnable(GL_DEPTH_TEST)
-    # The translucent volume never writes depth so it stays see-through and blends front to back; the flat faces and wireframe edges write depth.
     glDepthMask(not bool(use_volume))
     glDepthFunc(GL_LESS)
 
@@ -154,7 +150,6 @@ class CloudPass:
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     if bool(use_volume):
-      # Draw the box back faces so the raymarch proxy is rasterized from any camera side, including inside the volume.
       glEnable(GL_CULL_FACE)
       glCullFace(GL_FRONT)
     elif bool(self._wireframe):

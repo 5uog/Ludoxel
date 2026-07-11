@@ -468,9 +468,6 @@ class WgpuRendererBackend:
     self._res.depth_size = (w, h)
 
   def _wgpu_max_texture_dimension_2d(self, default: int) -> int:
-    # wgpu-py has exposed GPUAdapter.limits under both snake_case and kebab-case keys across
-    # versions; try both known spellings and fall back to `default` (today's unclamped size) so a
-    # bad guess here degrades gracefully, since this is the only platform that runs it.
     adapter = self._res.adapter if self._res is not None else None
     limits = getattr(adapter, "limits", None) if adapter is not None else None
     if limits is None:
@@ -621,8 +618,6 @@ class WgpuRendererBackend:
     return (center, u, v, float(half))
 
   def _create_sun_glare_uniform_bind_group(self, *, view_proj: np.ndarray, eye: Vec3, forward: Vec3, strength: float) -> tuple[object | None, object | None]:
-    # Ultra veiling glare reuses the sun pipeline and uniform block. The sun-mode slots carry (ultra, glare mode, glare strength); the quad faces the
-    # camera and is centered on the sun direction so the shader whitens the scene most strongly toward the sun.
     if self._res is None:
       return (None, None)
     import wgpu
@@ -640,8 +635,6 @@ class WgpuRendererBackend:
     return (buffer, bind_group)
 
   def _create_sun_flare_uniform_bind_group(self, *, sun_ndc: tuple[float, float], strength: float, aspect: float) -> tuple[object | None, object | None]:
-    # Screen-space lens-flare uniforms: one vec4 carrying the sun's normalized device x/y, the flare strength, and the viewport aspect.
-    # The fullscreen triangle needs no view matrix, so only these four floats are uploaded.
     if self._res is None:
       return (None, None)
     import wgpu
@@ -673,9 +666,7 @@ class WgpuRendererBackend:
     uniform[20:24] = (float(color.x), float(color.y), float(color.z), float(self._cfg.clouds.alpha))
     uniform[24:28] = (float(self._state.sun_dir.x), float(self._state.sun_dir.y), float(self._state.sun_dir.z), 0.0)
     uniform[28:32] = (float(active_fog.cam_x), float(active_fog.cam_z), float(active_fog.start), float(active_fog.end))
-    # xyz carry the eye position for the volume raymarch; w carries the motion clock for the noise churn and the flat-tier turbulence sway.
     uniform[32:36] = (float(eye.x), float(eye.y), float(eye.z), float(time_s))
-    # xy = flow direction (flat tier sway), z = cloud cell size (volume footprint mask), w unused.
     uniform[36:40] = (float(flow_dir_xz[0]), float(flow_dir_xz[1]), float(cell_size), 0.0)
     data = bytes(uniform.tobytes())
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-cloud-frame-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
@@ -936,9 +927,6 @@ class WgpuRendererBackend:
 
     draw_calls = 0
     instances = 0
-    # Draw the veiling glare, the sun disc, and the lens flare as background, before the world pass. All three write no depth, and the opaque world
-    # drawn next overdraws them, so world geometry nearer than the sun occludes them at the terrain silhouette instead of the glow being painted over
-    # foreground blocks. A block that hides the sun therefore hides its glare and flare.
     if bool(ultra_visuals):
       glare_strength = sun_glare_strength(forward, self._state.sun_dir)
       if glare_strength > 0.0:
@@ -1095,18 +1083,12 @@ class WgpuRendererBackend:
     self._advance_cloud_clock()
     if bool(self._state.cloud_enabled) and int(self._state.cloud_density) > 0:
       shift = self._cloud_field.shift(float(self._cloud_time_accum))
-      # Three separated paths. Wireframe draws the exterior cell-face edges of the merged cloud footprint (no interior faces);
-      # below the Ultra shadow map quality tier the flat path draws the same exterior faces solid;
-      # the Ultra tier raymarches a translucent animated volume through one bounding box per cloud.
       cloud_wireframe = bool(self._state.cloud_wireframe)
       cloud_ultra = bool(ultra_visuals) and not cloud_wireframe
       cloud_shapes = self._cloud_field.visible_shapes(eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(width) / max(float(height), 1.0), z_far=float(cloud_far_distance(int(render_distance_chunks))))
       if cloud_shapes:
         if cloud_ultra:
-          # Draw the translucent volumes back to front so a nearer cloud blends over the ones behind it instead of hiding them.
           cloud_shapes = sorted(cloud_shapes, key=lambda s: -((float(s.bounds.center.x) + float(shift.x) * float(s.bounds.speed_multiplier) - float(eye.x)) ** 2 + (float(s.bounds.center.y) - float(eye.y)) ** 2 + (float(s.bounds.center.z) + float(shift.z) * float(s.bounds.speed_multiplier) - float(eye.z)) ** 2))
-        # Clouds use their own far plane so the cloud fade range is not clipped by the world camera far plane;
-        # the Ultra volume pipeline does not write depth, so the projection difference does not feed back into the world depth buffer.
         cloud_view_proj = self._camera_view_proj(width=width, height=height, eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg), z_far=float(cloud_projection_z_far(int(render_distance_chunks), float(z_far))))
         cloud_uniform_buffer, cloud_uniform_bind_group = self._create_cloud_uniform_bind_group(view_proj=cloud_view_proj, shift=shift, eye=eye, time_s=float(self._cloud_time_accum), flow_dir_xz=self._cloud_field.flow_dir_xz(), cell_size=float(self._cloud_field.cell_size()), fog=cloud_fog)
         if cloud_uniform_buffer is not None:

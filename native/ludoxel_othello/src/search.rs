@@ -1,15 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Move ordering, alpha-beta / negamax search, exact endgame solve, and the
-// transposition tables. Ordering keys, pass rules, alpha-beta bounds, the
-// exact-solve threshold, and the soft-limit clearing policy mirror
-// ordering.py, search.py, transposition.py, and the classic search in
-// src/ludoxel/simulation/spaces/othello/engines/; the Python modules and this
-// crate must return identical values for identical inputs when the
-// transposition tables hold the same entries. A deadline overrun surfaces as
-// SearchTimeout, which the binding maps to the builtin TimeoutError.
-
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -44,9 +35,6 @@ fn normalize_hash_level(value: i64) -> i64 {
 }
 
 fn classic_ordered_moves(legal: u64, maximizing: bool) -> Vec<u32> {
-  // Mirrors sorted(moves, key=POSITION_WEIGHTS[index], reverse=maximizing)
-  // over the ascending legal-move list; the stable sort keeps ascending
-  // move order among equal weights exactly like Python's sorted.
   let mut moves = bitboard_to_moves(legal);
   if maximizing {
     moves.sort_by_key(|&m| -POSITION_WEIGHTS[m as usize]);

@@ -83,8 +83,6 @@ def _analysis_graph_samples(viewport: "RendererViewportWidget") -> tuple[tuple[i
   sign = 1.0 if int(analysis.side_to_move) == int(state.player_side) else -1.0
   if len(analysis.depth_samples) >= 2:
     return tuple((int(sample.depth), float(sample.score) * float(sign), bool(sample.solved)) for sample in tuple(analysis.depth_samples)[-12:])
-  # A single-depth analysis (weak, medium, or a solved endgame) plots the per-candidate root evaluations instead of one depth point; the series
-  # is the engine's real candidate ordering, best score first.
   if len(analysis.move_evaluations) >= 2:
     return tuple((int(evaluation.move_index), float(evaluation.score) * float(sign), bool(evaluation.solved)) for evaluation in tuple(analysis.move_evaluations)[:12])
   if not analysis.depth_samples:

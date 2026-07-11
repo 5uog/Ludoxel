@@ -35,9 +35,6 @@ def render_distance_radius_blocks(render_distance_chunks: int) -> float:
 
 
 def sun_glare_strength(forward: Vec3, sun_dir: Vec3) -> float:
-  # Ultra-only veiling glare weight. It grows with the squared alignment between the view direction and the sun, fades as the sun nears the horizon,
-  # and is zero when the sun sits behind the camera. Both backends read this one value. The scale is held down so looking into the sun dazzles without
-  # whiting the scene out; the sun disc keeps its own brightness independently.
   d = sun_dir.normalized()
   align = max(0.0, forward.normalized().dot(d))
   elevation = max(0.0, min(1.0, float(d.y) * 4.0))
@@ -52,11 +49,6 @@ def _smoothstep(edge0: float, edge1: float, x: float) -> float:
 
 
 def sun_flare_screen(view_proj: np.ndarray, sun_dir: Vec3, eye: Vec3, forward: Vec3, distance: float) -> tuple[float, float, float]:
-  # Screen-space lens-flare parameters shared by both backends: the sun's normalized-device x and y, and a strength in [0, 1]. The strength is zero
-  # when the sun is behind the camera, off the screen by a wide margin, near or below the horizon, or when the camera looks well away from the sun,
-  # so the ghosts fade in only while the sun is framed. Geometry occlusion is not depth-sampled; the elevation term stands in for the sun dropping
-  # behind terrain, and the alignment term for looking away from the light. Both backends pass their OpenGL-convention view_proj, whose clip x and y
-  # match the WGPU billboard, so the projected sun position is identical.
   d = sun_dir.normalized()
   center = eye + d * float(distance)
   mat = np.asarray(view_proj, dtype=np.float64)
@@ -88,9 +80,6 @@ def max_unfogged_render_distance_radius_blocks(z_far: float) -> float:
 
 
 def cloud_far_distance(render_distance_chunks: int) -> float:
-  # Horizontal XZ radius up to which clouds stay visible.
-  # The cloud fade is decoupled from the world fog and the camera far plane: both backends cull cloud shapes against this radius and draw them with a
-  # dedicated projection whose far plane covers it, so clouds do not vanish at the world render-distance fog.
   return float(max(float(render_distance_radius_blocks(int(render_distance_chunks))) * float(CLOUD_RENDER_DISTANCE_MULTIPLIER), float(CLOUD_MIN_VISIBLE_RADIUS_BLOCKS)))
 
 
@@ -145,21 +134,6 @@ class BackendShadowParams:
   dark_mul: float = 0.20
   cull_front: bool = False
   bias_min: float = 0.00003
-  # bias_slope and poly_offset_factor/units (below) both push a fragment's compared depth
-  # toward reading as lit -- shadow_sample in world.frag subtracts bias_slope's contribution
-  # before its comparison sample, and poly_offset_factor/units push the caster's own rasterized
-  # depth away from the light while the shadow map is built. That push runs along the light's
-  # depth axis, not across the shadow map's texel grid, so it widens fastest at a caster's own
-  # convex silhouette edge -- a lone block's corner, not the concave notches
-  # SHADOW_NORMAL_OFFSET_TEXELS targets -- leaving ground right next to the corner too bright
-  # relative to the shadow's interior. The sample this bias feeds is filtered (a 3x3 box, or the
-  # 16-tap Vogel disk at Ultra quality; see common/shadow_filtering.glsl), so the visible edge is
-  # soft rather than a sharp boundary at the silhouette regardless of how tightly this bias is
-  # tuned: lowering it narrows the lit gap without producing pixel-exact contact between a
-  # caster and its own shadow. Pushing it further toward zero keeps narrowing that gap but
-  # starts reintroducing self-shadow speckling on flat or gently sloped ground, so these values
-  # are a deliberate midpoint between the two failure modes, not a value derived from a specific
-  # measured threshold.
   bias_slope: float = 0.00018
   poly_offset_factor: float = 0.35
   poly_offset_units: float = 0.50
@@ -177,13 +151,6 @@ class ShadowQualityPreset:
   ultra_filter: bool = False
 
 
-# Tiers 1-4 keep the prior Low/Standard/High/Ultra render parameters shifted down one rung (the
-# old Lowest tier is discontinued). Tier 5 is a new Ultra: a materially larger shadow map and
-# `ultra_filter` gating a 16-tap rotated Vogel-disk kernel (see common/shadow_filtering.glsl) in
-# place of the shared 3x3 box filter every other tier still uses. Ultra's pcf_radius counts whole
-# shadow-map texels, wide enough that the 16 taps land on distinct texels and actually average away
-# the shadow map's own grid, while staying tight enough that a straight silhouette edge still reads
-# as a clean anti-aliased line at that width.
 _SHADOW_QUALITY_PRESETS: dict[int, ShadowQualityPreset] = {
   1: ShadowQualityPreset(quality=1, size=1536, coverage_radius=38.0, pcf_radius=1.15),
   2: ShadowQualityPreset(quality=2, size=2048, coverage_radius=40.0, pcf_radius=0.85),
@@ -202,18 +169,6 @@ def effective_backend_shadow_params(base: BackendShadowParams, quality: object) 
   return replace(base, size=int(preset.size), coverage_radius=float(preset.coverage_radius), pcf_radius=float(preset.pcf_radius), ultra_filter=bool(preset.ultra_filter))
 
 
-# Normal-offset shadow bias: before a fragment's world position is projected into light space, it
-# is pushed along its own geometric normal by this many shadow-map texels (converted to world
-# units via the active tier's coverage_radius/size), closing the shadow gap at concave block
-# corners where flat depth/slope bias alone leaves acne. The offset is kept small because Ludoxel
-# suns sit at a low, grazing elevation most of the time: for a near-horizontal receiver (grass,
-# floors) whose normal is close to perpendicular to the sun direction, an offset along that normal
-# projects into light space almost entirely as a UV shift, with only a small depth-shift component,
-# so most of its magnitude reads as shadow-map distance travelled, separate from bias proper. Too
-# large a value visibly detaches a caster's shadow from its own base (peter-panning) before it
-# meaningfully helps a corner. bias_min/bias_slope
-# still carry most of the grazing-angle protection; the normal offset only mops up the residual
-# corner-notch acne a slope bias cannot reach because it knows nothing about neighbouring casters.
 SHADOW_NORMAL_OFFSET_TEXELS: float = 0.5
 
 

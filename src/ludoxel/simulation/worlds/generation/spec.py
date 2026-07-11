@@ -12,7 +12,6 @@ GENERATION_MODES: tuple[str, ...] = (GENERATION_MODE_NORMAL, GENERATION_MODE_FLA
 
 GENERATION_VERSION_CURRENT: int = 1
 
-# Seeds are persisted as JSON integers and cross the native boundary as i64.
 SEED_MIN: int = -(2**63)
 SEED_MAX: int = 2**63 - 1
 DEFAULT_SEED: int = 1

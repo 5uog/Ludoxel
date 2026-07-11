@@ -97,8 +97,6 @@ class OthelloAiWorker(QObject):
     return self._book_learning_manager
 
   def _ensure_fallback_executor(self) -> ThreadPoolExecutor | None:
-    # When the process pool is unavailable, the fallback still runs off the UI thread so a heavy search cannot stall the render loop or the disc flip
-    # animations; the compiled Rust search releases the GIL while it runs. Results return through the same pending-future poll used by the process path.
     if self._fallback_executor is None:
       try:
         self._fallback_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="OthelloAiFallback")

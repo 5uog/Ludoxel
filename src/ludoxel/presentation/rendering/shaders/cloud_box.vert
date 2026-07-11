@@ -22,9 +22,6 @@ void main() {
     vec3 scale = max(i_data.xyz, vec3(0.0001));
     vec3 worldPos = (a_pos * scale) + i_offset + u_shift * i_speedMultiplier;
 
-    // Per-cloud turbulence sway along the flow axis: bounded, deterministic
-    // per instance, and distinct from the row speed, so no two clouds share
-    // one velocity even inside one speed row.
     float sway = i_turb.x * sin(i_turb.y * u_time + i_turb.z);
     worldPos.xz += u_flowDirXZ * sway;
 

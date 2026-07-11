@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Chunk-vs-clip-volume culling, ported from the Python fallback in
-// src/ludoxel/foundations/mathematics/frustums/clip.py. Corner order and the
-// row-major 4x4 clip-matrix layout match that fallback exactly:
-// corners = [(x0,y0,z0),(x1,y0,z0),(x0,y1,z0),(x1,y1,z0),
-//            (x0,y0,z1),(x1,y0,z1),(x0,y1,z1),(x1,y1,z1)]
 pub const CHUNK_SIZE: f32 = 16.0;
 pub const MAX_CHUNK_COUNT: usize = 16_777_216;
 

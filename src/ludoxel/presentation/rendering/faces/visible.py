@@ -23,14 +23,6 @@ class VisibleFace:
   mx: tuple[float, float, float]
 
 
-# Chunk mesh builds run one state string through this check for every candidate face of every
-# exposed block (thousands of calls per chunk, per src/ludoxel/presentation/rendering/faces
-# profiling), and a chunk's exposed blocks are overwhelmingly repeats of a handful of distinct
-# state strings (e.g. "stone", "dirt"), so parse_state + def_lookup + the bool computation is
-# worth memoizing per (def_lookup, state_str). def_lookup is a bound method of the renderer's
-# long-lived BlockVisualResolver; bound methods of the same instance compare and hash equal
-# regardless of attribute-access identity, so this partitions correctly across renderer reloads
-# without needing to track resolver identity explicitly.
 _FULL_CUBE_SOLID_CACHE: dict[tuple[DefLookup, str], bool] = {}
 
 

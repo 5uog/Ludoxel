@@ -69,8 +69,6 @@ def next_effect_slot(*, parent, prepared: PreparedSource, desired_slots: int, co
 
 
 def steal_oldest_effect_slot(prepared: PreparedSource) -> EffectVoiceSlot | None:
-  # Reclaims the voice that has been playing the longest so a new event can start when every slot of the source is busy. The reclaimed effect is
-  # stopped before reuse; the caller restarts it with the new volume.
   candidates = [slot for slot in prepared.slots if bool(slot.effect.isLoaded())]
   if not candidates:
     return None

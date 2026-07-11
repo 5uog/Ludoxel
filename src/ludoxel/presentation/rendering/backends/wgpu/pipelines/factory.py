@@ -443,10 +443,6 @@ def create_sun_pipeline(*, device, target_format, depth_format, camera_bind_grou
 def create_sun_glare_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
   import wgpu
 
-  # The veiling glare reuses the sun shader and is drawn as background before the world pass, like the sun disc.
-  # The billboard is a flat card at one world depth, so depth-testing it against the world buffer carved its iso-depth contour into a hard line across
-  # the fogged terrain and framed the veil against the sky. Drawing it before the world with an `always` comparison and no depth write lets the opaque
-  # world overdraw it, so foreground geometry occludes the glow at the terrain silhouette and the falloff stays continuous.
   vertex_shader = device.create_shader_module(label="ludoxel-sun-glare.vert", code=_wgpu_glsl_source("sun.vert"))
   fragment_shader = device.create_shader_module(label="ludoxel-sun-glare.frag", code=_wgpu_glsl_source("sun.frag"))
   layout = device.create_pipeline_layout(label="ludoxel-sun-glare-layout", bind_group_layouts=[camera_bind_group_layout])
@@ -464,8 +460,6 @@ def create_sun_glare_pipeline(*, device, target_format, depth_format, camera_bin
 def create_sun_flare_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
   import wgpu
 
-  # Screen-space lens flare. A fullscreen triangle emitted from the vertex index needs no vertex buffer; the fragment stage places ghost discs from
-  # the sun's screen position. It writes no depth and blends over the composed frame as a final overlay, matching the OpenGL flare path.
   vertex_shader = device.create_shader_module(label="ludoxel-sun-flare.vert", code=_wgpu_glsl_source("sun_flare.vert"))
   fragment_shader = device.create_shader_module(label="ludoxel-sun-flare.frag", code=_wgpu_glsl_source("sun_flare.frag"))
   layout = device.create_pipeline_layout(label="ludoxel-sun-flare-layout", bind_group_layouts=[camera_bind_group_layout])
@@ -481,7 +475,6 @@ def create_sun_flare_pipeline(*, device, target_format, depth_format, camera_bin
 
 
 def _cloud_instance_buffer_layout(*, wgpu):
-  # 11-float cloud instance row shared with the OpenGL path: center, scale + alphaMul, speedMultiplier, turbulence amp/freq/phase.
   return {
     "array_stride": 11 * 4,
     "step_mode": "instance",
@@ -526,8 +519,6 @@ def create_cloud_volume_pipeline(*, device, target_format, depth_format, camera_
     label="ludoxel-cloud-volume-pipeline",
     layout=layout,
     vertex={"module": vertex_shader, "entry_point": "main", "buffers": [_cloud_vertex_buffer_layout(wgpu=wgpu), _cloud_instance_buffer_layout(wgpu=wgpu)]},
-    # Draw the box back faces so the raymarch proxy is rasterized from any side, including inside the volume; the translucent result never writes
-    # depth so distant clouds stay visible through nearer ones.
     primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.front},
     depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.less},
     fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},

@@ -161,8 +161,6 @@ def _alpha_beta(board: tuple[int, ...], side_to_move: int, root_side: int, depth
 
 
 def _root_move_scores(board: tuple[int, ...], side: int, *, depth: int, deadline_s: float | None, sacrifice_level: int) -> tuple[tuple[int, float], ...]:
-  # Root scores for every legal move, ordered by position weight descending with ascending move index among ties. The compiled Rust module owns the
-  # hot path; the pure Python _alpha_beta loop below is the fallback and must return identical scores in identical order.
   moves = find_legal_moves(board, side)
   if not moves:
     return ()

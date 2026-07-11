@@ -349,10 +349,6 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
   else:
     w.setGeometry(restore_geometry)
 
-  # The loading overlay that GameScreen owns is the single loading surface. It covers the viewport from construction while loading is active, follows
-  # loading_status_changed, and hides on loading_finished, so the main window is shown directly and that overlay carries startup feedback. A separate
-  # top-level startup splash used to mirror the same status and finished signals, stacking a second surface over the same load and splitting the
-  # loading status between the two.
   _set_activation_callback(w.request_activation)
   viewport = w._screen.viewport
   startup_activation_done = False

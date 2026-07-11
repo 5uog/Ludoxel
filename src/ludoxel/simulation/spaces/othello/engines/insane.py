@@ -97,8 +97,6 @@ class InsaneSearchCache:
     if bool(changed):
       self.transposition.clear()
       self.exact_transposition.clear()
-      # The native session pins hash and sacrifice levels at construction,
-      # so a settings change replaces it instead of clearing it.
       self.native_search = None
 
   def ensure_native_search(self):

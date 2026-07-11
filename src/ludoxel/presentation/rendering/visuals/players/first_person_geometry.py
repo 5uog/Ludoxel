@@ -58,8 +58,6 @@ _ARM_ROT_Y_DEG = -60.0
 _ARM_POSTROTATION_X_OFFSET_PX = 5.6
 _ARM_FIRSTPERSON_SCALE = 1.18
 
-# First-person idle: a minute camera-space breathing applied to the neutral hand pose
-# so the held item, arm, and special item are not perfectly frozen while standing.
 _FP_IDLE_FREQ_A = 1.1
 _FP_IDLE_FREQ_B = 0.8
 _FP_IDLE_TRANS_AMP = 0.012

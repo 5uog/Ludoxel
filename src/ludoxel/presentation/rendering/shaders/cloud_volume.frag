@@ -24,11 +24,6 @@ out vec4 fragColor;
 
 #include "common/distance_fog.glsl"
 
-// A cloud is one translucent volume. The fragment stage marches the view
-// ray through an expanded proxy box, masks density by the packed occupancy
-// footprint, and feathers only the union boundary between occupied and
-// empty space.
-
 const float LDX_CLOUD_HASH_SCALE = 0.1031;
 const float LDX_CLOUD_HASH_OFFSET = 33.33;
 const int LDX_CLOUD_FBM_OCTAVE_COUNT = 4;
@@ -172,12 +167,6 @@ float ldx_cloud_proxy_pad() {
 }
 
 float ldx_cloud_nearest_occupied_distance(vec2 gridPos, float gw, float gd) {
-    // The packed footprint spans at most five cells per axis (a three-cell
-    // core plus one edge bump on each side), so the scan must cover indices
-    // zero through four. The former four-by-four scan skipped the fifth
-    // column or row, so an empty fragment beyond a five-wide footprint found
-    // no occupied cell and lost its exterior feather, leaving that side of
-    // the cloud a hard rectangular edge while narrower clouds stayed soft.
     float nearest = LDX_CLOUD_DISTANCE_SENTINEL;
     for (int j = 0; j < LDX_CLOUD_FOOTPRINT_SCAN_CELLS; j++) {
         for (int i = 0; i < LDX_CLOUD_FOOTPRINT_SCAN_CELLS; i++) {
@@ -275,16 +264,6 @@ void main() {
     }
     t0 = max(t0, 0.0);
 
-    // A fixed sixteen-step march aliased the per-cell coverage and the
-    // density noise into visible horizontal slabs on clouds whose view ray
-    // crossed a long span of the proxy box: wide footprints and grazing
-    // angles produced a large step, so a handful of samples painted the
-    // cloud as stacked plates. The step count now scales with the traversed
-    // span so the world-space step stays near refStep, and the per-step
-    // absorption is raised to the power sixteen over steps so the opacity
-    // accumulated across a uniform span equals the former sixteen-step
-    // result exactly. A cloud already resolved at sixteen steps keeps
-    // steps == 16 and stepScale == 1.0 and renders identically.
     float refStep = max(u_cellSize * LDX_CLOUD_CELL_REF_STEP_FACTOR, LDX_CLOUD_MIN_REF_STEP_BLOCKS);
     int steps = int(clamp(ceil((t1 - t0) / refStep), LDX_CLOUD_BASE_MARCH_STEPS, float(LDX_CLOUD_MAX_MARCH_STEPS)));
     float dt = (t1 - t0) / float(steps);

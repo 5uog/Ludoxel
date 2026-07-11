@@ -88,8 +88,6 @@ def make_othello_world_state() -> WorldState:
 
 
 def strip_othello_flat_floor_blocks(placed: Dict[BlockKey, str]) -> Dict[BlockKey, str]:
-  # Legacy Othello saves materialized the floor as a finite grid of placed blocks;
-  # cells whose placed state equals the flat-generation base state are dropped so the generation spec becomes the sole floor owner.
   probe = WorldState(blocks={}, revision=0, generation=othello_world_generation_spec())
   out: Dict[BlockKey, str] = {}
   for key, value in placed.items():

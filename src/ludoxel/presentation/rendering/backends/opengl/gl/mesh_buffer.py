@@ -29,7 +29,6 @@ class MeshBuffer:
 
   @staticmethod
   def _create_cloud_mesh(vertices: np.ndarray) -> "MeshBuffer":
-    # Cloud instance row: center(3), scale(3) + alphaMul(1) as one vec4 pair, speedMultiplier(1), turbulence amp/freq/phase(3).
     vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(vertices, dtype=np.float32))
     instance_vbo = attach_instance_buffer(stride_bytes=int(_CLOUD_INSTANCE_STRIDE), attrs=_CLOUD_INSTANCE_ATTRS)
     glBindVertexArray(0)
@@ -46,7 +45,6 @@ class MeshBuffer:
 
   @staticmethod
   def create_cloud_volume_instanced() -> "MeshBuffer":
-    # A unit cube used only as the raymarch proxy for the Ultra volumetric cloud fragment stage; its faces are never shaded as a surface.
     return MeshBuffer._create_cloud_mesh(np.asarray(_cube_vertices(), dtype=np.float32))
 
   @staticmethod

@@ -135,8 +135,6 @@ class OthelloMatchController:
     self._state = replace(self._state, thinking=bool(thinking)).normalized()
 
   def settled_game_state(self) -> OthelloGameState:
-    # A copy of the live state with pending flip animations resolved, for persistence: the board already holds the post-move cells while an animation
-    # plays, so the settled copy only resolves the turn transition. The live state keeps animating.
     state = self._state.normalized()
     if state.status != OTHELLO_GAME_STATE_ANIMATING or not state.animations:
       return replace(state, animations=(), thinking=False).normalized()

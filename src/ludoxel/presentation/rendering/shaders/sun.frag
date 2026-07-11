@@ -10,13 +10,6 @@ uniform float u_glare;
 
 out vec4 fragColor;
 
-// Shared radial disc for both quality tiers. The lit photospheric disc fills
-// most of the billboard, a near-white hot core sits at the centre, and a thin
-// warm corona rings the disc. Every radial term decays to zero before the quad
-// border so the disc and its glow stay circular and the square billboard never
-// shows a straight lit edge or a corner frame. The colour is dominated by the
-// black-body white of the core and disc; the warm tint stays confined to the
-// faint corona, leaving the rest of the disc yellow- and orange-free.
 vec4 ldx_sun_body(vec2 uv, float outerGlow) {
     vec2 p = uv * 2.0 - 1.0;
     float r = length(p);
@@ -27,9 +20,6 @@ vec4 ldx_sun_body(vec2 uv, float outerGlow) {
     float farHalo = 1.0 - smoothstep(0.70, 1.00, r);
     float edgeMask = 1.0 - smoothstep(0.92, 1.00, r);
 
-    // Coverage alone shapes the sun. The emitted colour is not pre-attenuated
-    // by the falloffs, so alpha blending over the sky never multiplies a dim
-    // value twice and cannot leave a dark ring around the disc.
     float alpha = clamp(disc + halo * 0.30 + farHalo * outerGlow, 0.0, 1.0) * edgeMask;
 
     vec3 coreCol = vec3(1.00, 0.99, 0.97);
@@ -42,8 +32,6 @@ vec4 ldx_sun_body(vec2 uv, float outerGlow) {
 }
 
 vec4 ldx_simple_sun(vec2 uv) {
-    // Lower tiers omit the wide outer glare but keep the same circular disc,
-    // white core, and thin corona so no tier draws a rectangular sun.
     return ldx_sun_body(uv, 0.08);
 }
 
@@ -55,11 +43,6 @@ vec4 ldx_sun_glare(vec2 uv, float strength) {
     vec2 p = uv * 2.0 - 1.0;
     float r = length(p);
 
-    // A broad veil across the billboard plus a tighter bloom toward the sun
-    // centre. The edge mask retires both before the border so the veil is a
-    // radial haze, never a screen-space rectangle. The weights and the clamp
-    // keep the core bright while holding the full-screen washout well below a
-    // white-out when looking straight into the light.
     float edgeMask = 1.0 - smoothstep(0.70, 1.00, r);
     float broad = (1.0 - smoothstep(0.0, 1.0, r)) * 0.20;
     float bloom = exp(-r * r * 5.0) * 0.75;

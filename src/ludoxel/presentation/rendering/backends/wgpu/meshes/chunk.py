@@ -57,8 +57,6 @@ def build_face_vertex_rows() -> np.ndarray:
 
 
 def build_face_wire_vertex_rows() -> np.ndarray:
-  # Twelve vertices per face (six line segments) shared with the OpenGL line path via textured_unit_face_wire_vertices: the four perimeter edges plus
-  # the triangulation diagonal, so world and cloud wireframes carry the same diagonal edge on both backends.
   rows = []
   for face_idx in range(FACE_COUNT):
     rows.extend(textured_unit_face_wire_vertices(int(face_idx)))

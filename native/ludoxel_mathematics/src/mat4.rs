@@ -1,12 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// 4x4 row-major matrix construction and composition, ported from the Python
-// fallbacks in src/ludoxel/foundations/mathematics/linear/mat4.py and
-// linear/transform_matrices.py. All matrices are [f32; 16] in row-major
-// order (index = row * 4 + col), matching `m[row, col]` in the numpy
-// fallback and the byte layout the frustum clip test already expects.
-
 pub type Mat4 = [f32; 16];
 
 pub fn identity() -> Mat4 {

@@ -1,13 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-// Deterministic hashing and value-noise sampling primitives. The mixing
-// constants, the lattice value mapping, the smoothstep, and the 2D/3D
-// interpolation order mirror terrain_math.py in
-// src/ludoxel/simulation/worlds/generation/; the Python fallback and this
-// module must return identical values for identical inputs. All floating
-// point math is f64.
-
 #[inline]
 fn mix64(value: u64) -> u64 {
   let mut z = value.wrapping_add(0x9E3779B97F4A7C15);
