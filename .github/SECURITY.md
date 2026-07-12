@@ -5,9 +5,9 @@ SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
 # Security Reporting Policy
 
-Version: 1.0.2
+Version: 1.0.3
 Initial Publication Date: 2026-06-04
-Last Updated: 2026-06-14
+Last Updated: 2026-07-11
 
 This document is the Security Reporting Policy referenced by [`LICENSE`](../LICENSE). It states how a Security Report may be submitted for the Current Repository and for an Official Distribution. It does not grant permission to Use the Original Materials beyond [`LICENSE`](../LICENSE).
 
@@ -17,7 +17,7 @@ A Security Report is supported only for the Current Repository and for an Offici
 
 Older commits, archived copies, forks, mirrors, downloaded copies, modified versions, unofficial deployments, and other third-party redistributions are outside the supported scope and are not an Official Distribution.
 
-A Security Report may concern repository source code, packaging configuration, native extension build configuration, Desktop Distribution material, shader or resource loading, app-managed runtime data handling, or dependency-related security issues when the reported issue materially affects the Current Repository or an Official Distribution.
+A Security Report may concern repository source code, packaging configuration, native extension build configuration, Desktop Distribution material, an Installer's License Text presentation and acceptance gate, embedded payload manifest and integrity verification, temporary extraction and installation rollback, Windows application and uninstall registration, macOS application bundle replacement, packaged Rust native artifacts, embedded legal resource integrity, shader or resource loading, app-managed runtime data handling, or dependency-related security issues when the reported issue materially affects the Current Repository or an Official Distribution.
 
 ## Private Reporting Channel
 
@@ -27,7 +27,7 @@ If GitHub private vulnerability reporting or a GitHub security advisory is avail
 
 ## Report Contents
 
-A Security Report submitted through a Private Reporting Channel may include a concise description of the suspected vulnerability; the affected file, feature, dependency, package, shader, build tool, or distribution artifact, if known; reproduction steps necessary to evaluate the issue; the expected security impact; and relevant operating-system, Python, Node, PyQt6, OpenGL/GPU, or packaging details.
+A Security Report submitted through a Private Reporting Channel may include a concise description of the suspected vulnerability; the affected file, feature, dependency, package, shader, build tool, Installer, or distribution artifact, if known; reproduction steps necessary to evaluate the issue; the expected security impact; and relevant operating-system, Python, Node, PyQt6, OpenGL/GPU, application version, or Installer version details.
 
 Do not include unrelated personal data, third-party confidential information, credentials, API keys, session tokens, cookies, private local files, or data obtained from accounts or systems that the reporter is not authorized to access.
 

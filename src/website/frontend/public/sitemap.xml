@@ -13,6 +13,12 @@
     <loc>https://ludoxel.vercel.app/docs/manual</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application</loc>
   </url>
   <url>
@@ -275,6 +281,48 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/support/scope-and-closure-support/unsupported-requests</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/installing-ludoxel</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/installing-ludoxel#installing-ludoxel-what-runs</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/installing-ludoxel#installing-ludoxel-license-gate</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/installing-ludoxel#installing-ludoxel-progress</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/installing-ludoxel#installing-ludoxel-windows-location</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/installing-ludoxel#installing-ludoxel-macos-location</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/installing-ludoxel#installing-ludoxel-authority-boundary</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/installing-ludoxel#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/uninstalling-ludoxel</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/uninstalling-ludoxel#uninstalling-ludoxel-windows-entry-points</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/uninstalling-ludoxel#uninstalling-ludoxel-confirmation-and-progress</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/uninstalling-ludoxel#uninstalling-ludoxel-data-retention</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/uninstalling-ludoxel#uninstalling-ludoxel-macos</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/installing-and-removing-ludoxel/desktop-installation/uninstalling-ludoxel#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/starting-ludoxel</loc>
@@ -2110,6 +2158,45 @@
     <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-application-bundle#see-also</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer#understanding-the-windows-installer-owner-files</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer#understanding-the-windows-installer-manifest-and-verification</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer#understanding-the-windows-installer-license-gate</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer#understanding-the-windows-installer-installation-and-registration</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer#understanding-the-windows-installer-authority-boundary</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-installer</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-installer#understanding-the-macos-installer-owner-files</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-installer#understanding-the-macos-installer-shared-verification</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-installer#understanding-the-macos-installer-authorization-and-registration</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-installer#understanding-the-macos-installer-authority-boundary</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-installer#see-also</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/understanding-native-extension-fallbacks</loc>
   </url>
   <url>
@@ -2134,10 +2221,13 @@
     <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text#including-license-text-owner-files</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text#including-license-text-copy-service</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text#including-license-text-generated-module</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text#including-license-text-publish-coordinates</loc>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text#including-license-text-legal-information-surface</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text#including-license-text-installer-boundary</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text#including-license-text-check-reading</loc>
@@ -2210,6 +2300,27 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/build-operation/local-build-procedure/reading-build-output#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission#running-an-installer-build-with-permission-authority-premise</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission#running-an-installer-build-with-permission-parse-validate</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission#running-an-installer-build-with-permission-dispatch</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission#running-an-installer-build-with-permission-staging-and-manifest</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission#running-an-installer-build-with-permission-authority-boundary</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/verification/package-inspection/running-package-checks-with-permission</loc>

@@ -1,5 +1,7 @@
-// SPDX-FileCopyrightText: 2026 Kento Konishi
-// SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 

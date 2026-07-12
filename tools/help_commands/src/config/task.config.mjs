@@ -15,6 +15,17 @@ export const HELP_COMMANDS = Object.freeze([
     examples: ['npm run help', 'npm run help -- lint:js', 'npm run help -- tools:export -- --lang ja'],
   },
   {
+    name: 'help:check',
+    npmScript: 'help:check',
+    usage: 'npm run help:check',
+    description: {
+      ja: 'package.json の npm scripts と HELP_COMMANDS の対応が一致していることを検査する。',
+      en: 'Check that package.json npm scripts and HELP_COMMANDS correspond one to one.',
+    },
+    options: ['なし。'],
+    examples: ['npm run help:check', 'npm run check'],
+  },
+  {
     name: 'package:check',
     npmScript: 'package:check',
     usage: 'npm run package:check -- [options]',
@@ -301,6 +312,83 @@ export const HELP_COMMANDS = Object.freeze([
     examples: ['npm run docs:export'],
   },
   {
+    name: 'website:install',
+    npmScript: 'website:install',
+    usage: 'npm run website:install',
+    description: {
+      ja: 'src/website の npm dependency を install する。',
+      en: 'Install npm dependencies for src/website.',
+    },
+    options: ['なし。'],
+    examples: ['npm run website:install'],
+  },
+  {
+    name: 'website:dev',
+    npmScript: 'website:dev',
+    usage: 'npm run website:dev',
+    description: {
+      ja: 'Vite dev server を起動する。',
+      en: 'Start the Vite development server.',
+    },
+    options: ['なし。'],
+    examples: ['npm run website:dev'],
+  },
+  {
+    name: 'website:build',
+    npmScript: 'website:build',
+    usage: 'npm run website:build',
+    description: {
+      ja: 'tsc -b の型検査に続けて Vite production build を実行する。',
+      en: 'Type-check with tsc -b, then run the Vite production build.',
+    },
+    options: ['なし。'],
+    examples: ['npm run website:build'],
+  },
+  {
+    name: 'website:preview',
+    npmScript: 'website:preview',
+    usage: 'npm run website:preview',
+    description: {
+      ja: 'website:build の production build 出力を Vite preview server で確認する。',
+      en: 'Preview the website:build production build output with the Vite preview server.',
+    },
+    options: ['なし。'],
+    examples: ['npm run website:build', 'npm run website:preview'],
+  },
+  {
+    name: 'website:lint',
+    npmScript: 'website:lint',
+    usage: 'npm run website:lint',
+    description: {
+      ja: 'tsc -b --noEmit で src/website の型検査だけを実行する。',
+      en: 'Run tsc -b --noEmit to type-check src/website without emitting output.',
+    },
+    options: ['なし。'],
+    examples: ['npm run website:lint'],
+  },
+  {
+    name: 'website:format',
+    npmScript: 'website:format',
+    usage: 'npm run website:format',
+    description: {
+      ja: 'Prettier で src/website を整形し、書き換える。',
+      en: 'Format src/website with Prettier, writing changes.',
+    },
+    options: ['なし。'],
+    examples: ['npm run website:format', 'npm run website:format:check'],
+  },
+  {
+    name: 'website:format:check',
+    npmScript: 'website:format:check',
+    usage: 'npm run website:format:check',
+    description: {
+      ja: 'Prettier で src/website の整形状態を検査し、書き換えは行わない。',
+      en: 'Check src/website formatting with Prettier without writing changes.',
+    },
+    options: ['なし。'],
+    examples: ['npm run website:format:check'],
+  },
+  {
     name: 'check',
     npmScript: 'check',
     usage: 'npm run check',
@@ -422,6 +510,83 @@ export const HELP_COMMANDS = Object.freeze([
     examples: ['npm run build:macos:check'],
   },
   {
+    name: 'build:installer',
+    npmScript: 'build:installer',
+    usage: 'npm run build:installer -- windows|macos [options]',
+    description: {
+      ja: 'ludoxel_installer build dispatcher。windows/macos command により Windows/macOS 系処理へ分岐する。',
+      en: 'Run the ludoxel_installer build dispatcher, branching to Windows or macOS paths by command.',
+    },
+    options: ['help, --help, -h', 'windows', 'macos', '--check', '--dry-run', '--skip-payload-build', '--skip-native-build', '--keep-build-cache'],
+    examples: ['npm run build:installer -- --help', 'npm run build:installer -- windows --dry-run'],
+  },
+  {
+    name: 'build:installer:help',
+    npmScript: 'build:installer:help',
+    usage: 'npm run build:installer:help',
+    description: {
+      ja: 'ludoxel_installer build dispatcher の help を表示する。',
+      en: 'Show ludoxel_installer build dispatcher help.',
+    },
+    options: ['なし。'],
+    examples: ['npm run build:installer:help'],
+  },
+  {
+    name: 'build:installer:windows',
+    npmScript: 'build:installer:windows',
+    usage: 'npm run build:installer:windows',
+    description: {
+      ja: '既存 Windows application payload を onefile build し、License Text 同梱と manifest 検証を経て dist/windows/ludoxel_installer.exe を publish する。',
+      en: 'Build the existing Windows application payload into a single onefile installer executable, embed the License Text and manifest, and publish dist/windows/ludoxel_installer.exe.',
+    },
+    options: ['--check', '--dry-run', '--skip-payload-build', '--skip-native-build', '--keep-build-cache'],
+    examples: ['npm run build:installer:windows:check', 'npm run build:installer:windows'],
+  },
+  {
+    name: 'build:installer:windows:check',
+    npmScript: 'build:installer:windows:check',
+    usage: 'npm run build:installer:windows:check',
+    description: {
+      ja: 'Windows installer の entry script、legal material、font、icon、package metadata を検査する。',
+      en: 'Check the Windows installer entry script, legal material, fonts, icons, and package metadata.',
+    },
+    options: ['なし。'],
+    examples: ['npm run build:installer:windows:check'],
+  },
+  {
+    name: 'build:installer:macos',
+    npmScript: 'build:installer:macos',
+    usage: 'npm run build:installer:macos',
+    description: {
+      ja: '既存 macOS application payload を bundle build し、License Text 同梱と manifest 検証を経て dist/macos/Ludoxel Installer.app を publish する。macOS 上でのみ実行できる。',
+      en: 'Build the existing macOS application payload into an installer bundle, embed the License Text and manifest, and publish dist/macos/Ludoxel Installer.app. Runs on macOS only.',
+    },
+    options: ['--check', '--dry-run', '--skip-payload-build', '--skip-native-build', '--keep-build-cache'],
+    examples: ['npm run build:installer:macos:check', 'npm run build:installer:macos'],
+  },
+  {
+    name: 'build:installer:macos:check',
+    npmScript: 'build:installer:macos:check',
+    usage: 'npm run build:installer:macos:check',
+    description: {
+      ja: 'macOS installer の entry script、legal material、font、icon、package metadata を検査する。',
+      en: 'Check the macOS installer entry script, legal material, fonts, icons, and package metadata.',
+    },
+    options: ['なし。'],
+    examples: ['npm run build:installer:macos:check'],
+  },
+  {
+    name: 'build:installer:check',
+    npmScript: 'build:installer:check',
+    usage: 'npm run build:installer:check',
+    description: {
+      ja: 'Windows と macOS 両方の installer packaging check を順に実行する。',
+      en: 'Run the Windows and macOS installer packaging checks in sequence.',
+    },
+    options: ['なし。'],
+    examples: ['npm run build:installer:check'],
+  },
+  {
     name: 'clean',
     npmScript: 'clean',
     usage: 'npm run clean -- [options]',
@@ -464,6 +629,61 @@ export const HELP_COMMANDS = Object.freeze([
     },
     options: ['--help, -h', '--lang ja|en', '--require-ffmpeg', '--require-wav'],
     examples: ['npm run assets:audio:check', 'npm run assets:audio:check -- --require-wav'],
+  },
+  {
+    name: 'assets:block-thumbnails:help',
+    npmScript: 'assets:block-thumbnails:help',
+    usage: 'npm run assets:block-thumbnails:help -- [--lang ja|en]',
+    description: {
+      ja: '既存 Ludoxel block model/state/face rendering から thumbnail を生成・検査する tool の help を表示する。',
+      en: 'Show help for the tool that generates and checks block thumbnails through the existing Ludoxel block model, state, and face rendering.',
+    },
+    options: ['--lang ja|en'],
+    examples: ['npm run assets:block-thumbnails:help -- --lang en'],
+  },
+  {
+    name: 'assets:block-thumbnails:generate',
+    npmScript: 'assets:block-thumbnails:generate',
+    usage: 'npm run assets:block-thumbnails:generate -- [options]',
+    description: {
+      ja: '既存 Ludoxel rendering API を呼び出して block thumbnail PNG を生成する。',
+      en: 'Generate block thumbnail PNG files through the existing Ludoxel rendering API.',
+    },
+    options: ['詳細は assets:block-thumbnails:help を参照する。'],
+    examples: ['npm run assets:block-thumbnails:generate -- --all', 'npm run assets:block-thumbnails:generate -- --block ludoxel:stone_brick_wall'],
+  },
+  {
+    name: 'assets:block-thumbnails:check',
+    npmScript: 'assets:block-thumbnails:check',
+    usage: 'npm run assets:block-thumbnails:check -- [options]',
+    description: {
+      ja: 'block thumbnail の入力、state、neighbor、既存 output PNG を検査する。',
+      en: 'Check block thumbnail inputs, states, neighbors, and existing output PNG files.',
+    },
+    options: ['詳細は assets:block-thumbnails:help を参照する。'],
+    examples: ['npm run assets:block-thumbnails:check -- --all'],
+  },
+  {
+    name: 'changelog:generate',
+    npmScript: 'changelog:generate',
+    usage: 'npm run changelog:generate',
+    description: {
+      ja: 'src/website の changelog data から assets/ui/menu/changelog.json を生成する。',
+      en: 'Generate assets/ui/menu/changelog.json from the src/website changelog data.',
+    },
+    options: ['なし。'],
+    examples: ['npm run changelog:generate', 'npm run changelog:check'],
+  },
+  {
+    name: 'changelog:check',
+    npmScript: 'changelog:check',
+    usage: 'npm run changelog:check',
+    description: {
+      ja: 'assets/ui/menu/changelog.json が src/website の changelog data と一致していることを検査する。',
+      en: 'Check that assets/ui/menu/changelog.json matches the src/website changelog data.',
+    },
+    options: ['なし。'],
+    examples: ['npm run changelog:check', 'npm run check'],
   },
 ]);
 

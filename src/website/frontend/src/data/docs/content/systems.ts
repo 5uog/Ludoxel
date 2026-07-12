@@ -2760,7 +2760,7 @@ class DemonstrationRecord:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.7"`,
+            code: `__version__ = "3.8.8"`,
           },
           {
             kind: 'note',

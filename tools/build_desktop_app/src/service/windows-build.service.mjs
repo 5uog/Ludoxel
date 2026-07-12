@@ -8,12 +8,12 @@ import { resolve } from 'node:path';
 
 import { buildNativeExtensionsBeforeDesktop } from '../command/native/build-native.command.mjs';
 import { buildWindowsPyinstallerCommand } from '../command/pyinstaller/build-command.pyinstaller.mjs';
-import { APP_NAME, PYINSTALLER_CONFIG_ROOT, PYINSTALLER_SPEC_ROOT, PYINSTALLER_STAGING_ROOT, PYINSTALLER_WORK_ROOT, WINDOWS_ENTRY_SCRIPT, WINDOWS_PUBLISH_DIR } from '../config/build.config.mjs';
+import { APP_NAME, PYINSTALLER_CONFIG_ROOT, PYINSTALLER_SPEC_ROOT, PYINSTALLER_STAGING_ROOT, PYINSTALLER_WORK_ROOT, WINDOWS_ENTRY_SCRIPT, WINDOWS_PAYLOAD_DIR } from '../config/build.config.mjs';
 import { PROJECT_ROOT } from '../config/path.config.mjs';
 import { ensureDirectory, removeIfExists } from '../shared/file/path.file.mjs';
 import { resolvePythonExecutable } from '../shared/python/resolve.python.mjs';
 import { runProcess } from '../shared/process/run.process.mjs';
-import { copyLegalMaterial } from './legal-copy.service.mjs';
+import { generateLicenseTextModule } from './license-codegen.service.mjs';
 
 function requireWindowsHost() {
   if (process.platform !== 'win32') {
@@ -29,10 +29,6 @@ function requireWindowsEntryScript() {
   }
 }
 
-function removeObsoleteOnedir() {
-  removeIfExists(resolve(PROJECT_ROOT, WINDOWS_PUBLISH_DIR, APP_NAME));
-}
-
 function isFileLockError(error) {
   return error?.code === 'EPERM' || error?.code === 'EBUSY' || error?.code === 'EACCES';
 }
@@ -41,18 +37,18 @@ function sleepMs(milliseconds) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.max(0, milliseconds));
 }
 
-function renamePublishedExecutable(pendingExe, publishExe) {
+function renameStagedPayload(pendingExe, payloadExe) {
   const maxAttempts = 20;
   const retryDelayMs = 500;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
-      renameSync(pendingExe, publishExe);
+      renameSync(pendingExe, payloadExe);
       return;
     } catch (error) {
       if (attempt < maxAttempts && isFileLockError(error)) {
         if (attempt === 1) {
-          console.log(`[build_desktop_app] published executable is busy; retrying replacement of ${publishExe}`);
+          console.log(`[build_desktop_app] staged payload is busy; retrying replacement of ${payloadExe}`);
         }
         sleepMs(retryDelayMs);
         continue;
@@ -63,30 +59,28 @@ function renamePublishedExecutable(pendingExe, publishExe) {
   }
 }
 
-function publishWindowsExecutable(stagingDir) {
+function stageWindowsPayload(stagingDir) {
   const stagedExe = resolve(stagingDir, `${APP_NAME}.exe`);
-  const publishDir = resolve(PROJECT_ROOT, WINDOWS_PUBLISH_DIR);
-  const publishExe = resolve(publishDir, `${APP_NAME}.exe`);
+  const payloadDir = resolve(PROJECT_ROOT, WINDOWS_PAYLOAD_DIR);
+  const payloadExe = resolve(payloadDir, `${APP_NAME}.exe`);
 
   if (!existsSync(stagedExe)) {
     throw new Error(`PyInstaller did not produce staged executable: ${stagedExe}`);
   }
 
-  ensureDirectory(publishDir);
-  copyLegalMaterial(stagingDir);
+  ensureDirectory(payloadDir);
 
-  const pendingExe = resolve(publishDir, `${APP_NAME}.exe.pending-${randomUUID().replace(/-/g, '').slice(0, 12)}`);
+  const pendingExe = resolve(payloadDir, `${APP_NAME}.exe.pending-${randomUUID().replace(/-/g, '').slice(0, 12)}`);
 
   try {
     copyFileSync(stagedExe, pendingExe);
-    renamePublishedExecutable(pendingExe, publishExe);
-    copyLegalMaterial(publishDir);
-    console.log(`[build_desktop_app] published Windows executable: ${publishExe}`);
+    renameStagedPayload(pendingExe, payloadExe);
+    console.log(`[build_desktop_app] staged Windows application payload: ${payloadExe}`);
   } catch (error) {
     removeIfExists(pendingExe);
 
     if (isFileLockError(error)) {
-      throw new Error(`Could not publish ${publishExe}: the file is in use. Close any running ${APP_NAME}.exe (and any window previewing it), then run the build again.`, { cause: error });
+      throw new Error(`Could not stage ${payloadExe}: the file is in use. Close any running ${APP_NAME}.exe (and any window previewing it), then run the build again.`, { cause: error });
     }
 
     throw error;
@@ -107,10 +101,6 @@ export function runWindowsBuild(options = {}) {
     }
   }
 
-  if (!options.dryRun) {
-    removeObsoleteOnedir();
-  }
-
   const pythonExecutable = process.platform === 'win32' ? resolvePythonExecutable(options.env) : 'python.exe';
   const token = randomUUID().replace(/-/g, '').slice(0, 12);
   const command = buildWindowsPyinstallerCommand({ pythonExecutable, token, developerConsole: options.developerConsole });
@@ -126,6 +116,8 @@ export function runWindowsBuild(options = {}) {
     }
     return 0;
   }
+
+  generateLicenseTextModule();
 
   ensureDirectory(command.specDir);
   ensureDirectory(command.hookDir);
@@ -147,7 +139,7 @@ export function runWindowsBuild(options = {}) {
     return exitCode;
   }
 
-  publishWindowsExecutable(command.stagingDir);
+  stageWindowsPayload(command.stagingDir);
 
   if (!options.keepBuildCache) {
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_WORK_ROOT, token), { recursive: true, force: true });
@@ -155,6 +147,5 @@ export function runWindowsBuild(options = {}) {
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_STAGING_ROOT, token), { recursive: true, force: true });
   }
 
-  removeObsoleteOnedir();
   return 0;
 }

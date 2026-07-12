@@ -1,0 +1,40 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+QDialog#thirdPartyDialog {
+  background: #242424;
+  color: #f5f5f5;
+}
+
+QListWidget#thirdPartyList {
+  color: #f5f5f5;
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5c5c5c;
+  border-bottom: 2px solid #5c5c5c;
+  font-size: 13px;
+}
+
+QListWidget#thirdPartyList::item {
+  padding: 6px 8px;
+}
+
+QListWidget#thirdPartyList::item:selected {
+  background: #4c7f2a;
+  color: #ffffff;
+}
+
+QPlainTextEdit#thirdPartyTextView {
+  color: #f5f5f5;
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5c5c5c;
+  border-bottom: 2px solid #5c5c5c;
+  padding: 10px;
+  font-family: "Kaisei Opti", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+}

@@ -2,6 +2,43 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.8",
+      "tags": [
+        "Desktop Application",
+        "Windows",
+        "macOS",
+        "Settings"
+      ],
+      "sections": [
+        {
+          "title": "Ludoxel Adds an Offline, License-Gated Installer",
+          "items": [
+            "A new installer presents the Ludoxel Independent License in full before any installation step runs. The License Text view tracks scroll position against its own content range, and the \"Agree and Install\" button stays disabled until the Licensee has scrolled to the end of the License Text and checked \"I have read and agree to the Ludoxel Independent License.\" A \"Third-Party Licenses\" button opens a separate viewer listing each bundled third-party material next to its license text.",
+            "The installer embeds the Ludoxel application build and a manifest recording its platform, architecture, payload format, SHA-256 checksum, and the SHA-256 of the License Text the manifest was generated against. Before extracting anything, the installer recomputes both checksums against its own embedded License Text and payload bytes, and refuses to proceed if either does not match. Every installation step runs entirely offline."
+          ]
+        },
+        {
+          "title": "Windows Installation Registers Ludoxel in Installed Apps and Preserves User Data on Removal",
+          "items": [
+            "Agreeing to the License installs Ludoxel to `%LOCALAPPDATA%\\Programs\\Ludoxel` under the current user's own permissions, creates a Start Menu shortcut, and registers Ludoxel under Windows' Installed Apps with its display name, version, publisher, install location, and an uninstall command. Running the installer again against an existing installation upgrades a lower version in place and refuses to replace a newer installed version with an older one.",
+            "The installed uninstaller removes the Start Menu shortcut, the Installed Apps registration, and the application files, and preserves Ludoxel worlds, settings, keybinds, skins, AI data, and Othello data, which live outside the installation directory. The uninstall confirmation screen shows the installed version and install location before removal begins."
+          ]
+        },
+        {
+          "title": "macOS Installation Places Ludoxel in Applications and Registers It with Launch Services",
+          "items": [
+            "Agreeing to the License installs Ludoxel to `/Applications/Ludoxel.app`, requesting the native macOS authorization prompt only when writing to `/Applications` requires it, and registers the installed bundle with Launch Services so Spotlight and Launchpad recognize it immediately."
+          ]
+        },
+        {
+          "title": "Settings Adds a Legal Information Tab",
+          "items": [
+            "The Settings surface adds a Legal tab that displays the Ludoxel License Text and the license text of every bundled third-party material, selectable from a list, directly inside the running application."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.7",
       "tags": [
         "Desktop Application",

@@ -102,6 +102,7 @@ class SettingsOverlay(SidebarDialogBase):
     self._tab_controls = self._make_tab_button("Controls", 3, self._set_tab)
     self._tab_audio = self._make_tab_button("Audio", 4, self._set_tab)
     self._tab_about = self._make_tab_button("About", 5, self._set_tab)
+    self._tab_legal = self._make_tab_button("Legal", 6, self._set_tab)
     self._sidebar_layout.addWidget(self._tab_display)
     self._sidebar_layout.addWidget(self._tab_world)
     self._sidebar_layout.addWidget(self._tab_game)
@@ -113,6 +114,7 @@ class SettingsOverlay(SidebarDialogBase):
       self._sidebar_layout.addWidget(self._preview_button)
     self._sidebar_layout.addStretch(1)
     self._sidebar_layout.addWidget(self._tab_about)
+    self._sidebar_layout.addWidget(self._tab_legal)
     self._close_button: QPushButton | None = None
     if not bool(as_window):
       self._close_button = self._make_sidebar_action_button("Close", self.back_requested.emit)
@@ -127,6 +129,10 @@ class SettingsOverlay(SidebarDialogBase):
     self._about_content_page: QWidget | None = None
     self._about_page = self._create_about_page_shell()
     self._stack.addWidget(self._about_page)
+    self._legal_built = False
+    self._legal_content_page: QWidget | None = None
+    self._legal_page = self._create_legal_page_shell()
+    self._stack.addWidget(self._legal_page)
     self._set_tab(0)
 
   @staticmethod
@@ -201,14 +207,21 @@ class SettingsOverlay(SidebarDialogBase):
     self.creative_mode_changed.emit(bool(checked))
 
   def _set_tab(self, index: int) -> None:
-    selected = int(max(0, min(5, int(index))))
+    selected = int(max(0, min(6, int(index))))
+    tab_buttons = (self._tab_display, self._tab_world, self._tab_game, self._tab_controls, self._tab_audio, self._tab_about, self._tab_legal)
     if selected == 5 and not bool(self._about_built):
-      self._set_stack_page(index=selected, max_index=5, tab_buttons=(self._tab_display, self._tab_world, self._tab_game, self._tab_controls, self._tab_audio, self._tab_about))
+      self._set_stack_page(index=selected, max_index=6, tab_buttons=tab_buttons)
       self._show_about_loader()
       self._paint_about_loader_once()
       self._ensure_about_tab()
       return
-    self._set_stack_page(index=selected, max_index=5, tab_buttons=(self._tab_display, self._tab_world, self._tab_game, self._tab_controls, self._tab_audio, self._tab_about))
+    if selected == 6 and not bool(self._legal_built):
+      self._set_stack_page(index=selected, max_index=6, tab_buttons=tab_buttons)
+      self._show_legal_loader()
+      self._paint_legal_loader_once()
+      self._ensure_legal_tab()
+      return
+    self._set_stack_page(index=selected, max_index=6, tab_buttons=tab_buttons)
 
   def _create_about_page_shell(self) -> QWidget:
     page = QWidget(self._stack)
@@ -263,6 +276,60 @@ class SettingsOverlay(SidebarDialogBase):
     self._set_about_loader_progress(100)
     self._about_page_stack.setCurrentWidget(content_page)
     self._about_built = True
+
+  def _create_legal_page_shell(self) -> QWidget:
+    page = QWidget(self._stack)
+    page.setObjectName("legalPage")
+    page.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+    page.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    page_layout = QVBoxLayout(page)
+    page_layout.setContentsMargins(0, 0, 0, 0)
+    page_layout.setSpacing(0)
+
+    self._legal_page_stack = QStackedWidget(page)
+    self._legal_page_stack.setObjectName("legalPageStack")
+    self._legal_page_stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    page_layout.addWidget(self._legal_page_stack, stretch=1)
+
+    self._legal_loader_page, self._legal_loader_label, self._legal_loader_progress = create_settings_loader_page(self._legal_page_stack, text="Loading Legal section...")
+    self._legal_page_stack.addWidget(self._legal_loader_page)
+    self._legal_page_stack.setCurrentWidget(self._legal_loader_page)
+    return page
+
+  def _set_legal_loader_progress(self, value: int) -> None:
+    progress = int(max(0, min(100, int(value))))
+    self._legal_loader_label.setText("Loading Legal section...")
+    self._legal_loader_progress.setValue(progress)
+
+  def _show_legal_loader(self) -> None:
+    self._set_legal_loader_progress(0)
+    self._legal_page_stack.setCurrentWidget(self._legal_loader_page)
+
+  def _paint_legal_loader_once(self) -> None:
+    self._set_legal_loader_progress(25)
+    self._legal_loader_page.ensurePolished()
+    self._legal_loader_page.updateGeometry()
+    self._legal_page_stack.repaint()
+    self._stack.repaint()
+    self._content.repaint()
+    QApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
+
+  def _ensure_legal_tab(self) -> None:
+    if bool(self._legal_built):
+      self._legal_page_stack.setCurrentWidget(self._legal_content_page)
+      return
+
+    from ludoxel.presentation.interface.settings.legal.page import build_legal_tab
+
+    self._set_legal_loader_progress(50)
+    content_page = build_legal_tab(self, parent=self._legal_page_stack)
+    self._set_legal_loader_progress(75)
+    self._legal_page_stack.addWidget(content_page)
+    self._legal_content_page = content_page
+    self._set_legal_loader_progress(100)
+    self._legal_page_stack.setCurrentWidget(content_page)
+    self._legal_built = True
 
   def sync_values(self, **kwargs) -> None:
     sync_overlay_values(self, **kwargs)

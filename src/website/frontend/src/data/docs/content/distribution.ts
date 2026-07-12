@@ -11,7 +11,7 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Platform Packages',
     title: 'Understanding the Windows Executable',
     description:
-      'Delimits the evidentiary conditions under which a Windows binary counts as the repository-produced Ludoxel artifact: the PyInstaller command builder, the host and entry gates, the publication function that institutes the staged/published distinction, lock handling, and the legal-material copy — and refuses to convert a published file into release authority.',
+      'Delimits the evidentiary conditions under which a Windows binary counts as the repository-produced Ludoxel application payload: the PyInstaller command builder, the host and entry gates, the staging function that institutes the staged/payload distinction, lock handling, and the generated License Text module — and refuses to convert a staged payload into release authority.',
     sections: [
       {
         id: 'understanding-the-windows-executable-owner-files',
@@ -19,15 +19,19 @@ export const distributionPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: '`dist/windows/Ludoxel.exe` is the publication coordinate written by the Windows path of `tools/build_desktop_app`. `tools/build_desktop_app/src/config/build.config.mjs` fixes the path constants, `buildWindowsPyinstallerCommand` builds the PyInstaller invocation, `tools/build_desktop_app/src/service/windows-build.service.mjs` stages and publishes the executable, and `tools/build_desktop_app/src/service/legal-copy.service.mjs` copies the configured notice paths beside it. A file occupying that path gains repository build provenance only through that service sequence.',
+            text: [
+              '`build/desktop-payloads/windows/Ludoxel.exe` is the staging coordinate written by the Windows path of `tools/build_desktop_app`. `tools/build_desktop_app/src/config/build.config.mjs` fixes `WINDOWS_PAYLOAD_DIR`, `buildWindowsPyinstallerCommand` builds the PyInstaller invocation, and `tools/build_desktop_app/src/service/windows-build.service.mjs` stages the executable there. The staged executable is an application payload, not a public download coordinate: ',
+              { kind: 'link', label: 'Understanding the Windows Installer', href: '/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer' },
+              ' owns the offline installer that embeds this payload and writes the artifact a Licensee actually receives, `dist/windows/ludoxel_installer.exe`.',
+            ],
           },
           {
             kind: 'paragraph',
-            text: '`runWindowsBuild` enforces the sequence in `tools/build_desktop_app/src/service/windows-build.service.mjs`: host and entry-script gates run before optional native compilation, a random token separates the PyInstaller work, spec, and staging roots, `runProcess` executes the constructed command, and `publishWindowsExecutable` copies the staged executable only after a zero exit code. `EPERM`, `EBUSY`, and `EACCES` retain the staged executable when the published target is locked. That branch records a local publication failure without rewriting the staged build result.',
+            text: '`runWindowsBuild` enforces the sequence in `tools/build_desktop_app/src/service/windows-build.service.mjs`: host and entry-script gates run before optional native compilation, a random token separates the PyInstaller work, spec, and staging roots, `runProcess` executes the constructed command, `generateLicenseTextModule` writes the generated License Text module before the PyInstaller spec is written to disk, and `stageWindowsPayload` copies the staged executable into `WINDOWS_PAYLOAD_DIR` only after a zero exit code. `EPERM`, `EBUSY`, and `EACCES` retry the staging rename through `renameStagedPayload`; a target still locked after every retry raises a hard error and leaves the previous staged payload untouched.',
           },
           {
             kind: 'paragraph',
-            text: 'The Windows artifact path begins outside the service at the package-script command surface, narrows through the desktop-build parser and dispatch path, and enters `runWindowsBuild` only after the platform task and validated options have been selected. `buildWindowsPyinstallerCommand` materializes the subprocess argument vector; the service assigns tokenized work, spec, and staging directories; `runProcess` returns the subprocess outcome; `publishWindowsExecutable` mutates `dist/windows` after successful staging; and `copyLegalMaterial` repeats the notice copy beside each retained artifact. Tool output can establish which local branch completed and which file path was written. The root `LICENSE` remains the independent source for circulation authority after the tool has finished its own construction work.',
+            text: 'The Windows artifact path begins outside the service at the package-script command surface, narrows through the desktop-build parser and dispatch path, and enters `runWindowsBuild` only after the platform task and validated options have been selected. `buildWindowsPyinstallerCommand` materializes the subprocess argument vector; the service assigns tokenized work, spec, and staging directories; `runProcess` returns the subprocess outcome; and `stageWindowsPayload` writes the payload into `build/desktop-payloads/windows` after successful staging. Tool output can establish which local branch completed and which file path was written. The root `LICENSE` remains the independent source for circulation authority after the tool has finished its own construction work.',
           },
           {
             kind: 'paragraph',
@@ -42,7 +46,11 @@ npm run build:desktop -- windows`,
           },
           {
             kind: 'paragraph',
-            text: 'What a completed `Ludoxel.exe` certifies is deliberately narrow: that `publishWindowsExecutable` reached its success path on a Windows host. It certifies nothing about whether any party may distribute the file, whether the file is an official release, or whether the third-party material carried beside it has been cleared. The build path is not competent to confer any of those; they are reserved to the controlling License Text and to separate release authority.',
+            text: [
+              'What a completed `Ludoxel.exe` certifies is deliberately narrow: that `stageWindowsPayload` reached its success path on a Windows host. It certifies nothing about whether any party may distribute the file, whether the file is an official release, or whether the third-party material governing it has been cleared. The build path is not competent to confer any of those; they are reserved to the controlling License Text and to separate release authority. Assembling that payload into the artifact a Licensee installs is the responsibility ',
+              { kind: 'link', label: 'Running an Installer Build with Permission', href: '/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission' },
+              ' describes.',
+            ],
           },
           {
             kind: 'note',
@@ -63,7 +71,11 @@ npm run build:desktop -- windows`,
           },
           {
             kind: 'paragraph',
-            text: "The spec fixes the one-file build under the application name `Ludoxel`. It declares the data roots `assets`, `src/ludoxel`, and `third-party` — each included only when present — appends `collect_data_files('ludoxel')`, places `src` on the import search path, points `hookspath` at the generated hook directory, names the bootstrap hidden imports `ludoxel.application.bootstrap` and `ludoxel.application.bootstrap.run`, sets the Windows icon when one resolves, and points the analysis at the entry script `src/ludoxel/__main__.py`. `LICENSE` is deliberately absent from the bundled data: the application does not read it at runtime, a root-level one-file data entry named `LICENSE` fails extraction by the bootloader, and the publish-time legal copy retains the controlling text beside the executable.",
+            text: [
+              "The spec fixes the one-file build under the application name `Ludoxel`. It declares the data roots `assets`, `src/ludoxel`, and `third-party` through `directoryLegalMaterialPaths`, which admits only directory sources — each included only when present — appends `collect_data_files('ludoxel')`, places `src` on the import search path, points `hookspath` at the generated hook directory, names the bootstrap hidden imports `ludoxel.application.bootstrap` and `ludoxel.application.bootstrap.run`, sets the Windows icon when one resolves, and points the analysis at the entry script `src/ludoxel/__main__.py`. `LICENSE` is a single file, not a directory, so `directoryLegalMaterialPaths` never admits it as a `--add-data` source: a one-file PyInstaller build nests a file source one directory level deeper than its declared destination, which previously produced an unopenable `LICENSE\\LICENSE` entry inside the bundle. `generateLicenseTextModule` avoids that failure mode entirely by writing the License Text into a generated Python module the spec's own package collection carries through the PYZ archive instead of through `--add-data`; ",
+              { kind: 'link', label: 'Including License Text', href: '/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text' },
+              ' owns that mechanism.',
+            ],
           },
           {
             kind: 'paragraph',
@@ -85,24 +97,24 @@ npm run build:desktop -- windows`,
         content: [
           {
             kind: 'paragraph',
-            text: '`publishWindowsExecutable` institutes the distinction between a staged output and a published artifact, and it is the only writer permitted to touch the public-facing `dist/windows/Ludoxel.exe`. Before it writes, `removeObsoleteOnedir` deletes any stale `dist/windows/Ludoxel` one-directory tree, so an older directory package cannot coexist with the one-file executable and contaminate a later inspection. It then copies legal material into the staging directory, copies the staged executable to a temporary name in the publish directory and renames that file atomically over the published path, and copies legal material beside it. The rename is the publication step: it makes the replacement indivisible, so a concurrent launch reads either the previous executable or the complete new one, never a partially written archive that would fail at startup with a bootloader extraction error.',
+            text: '`stageWindowsPayload` institutes the distinction between a PyInstaller staging output and a durable application payload, and it is the only writer permitted to touch `build/desktop-payloads/windows/Ludoxel.exe`. It copies the staged executable to a temporary name inside `WINDOWS_PAYLOAD_DIR` and renames that file atomically over the payload path. The rename is the staging step: it makes the replacement indivisible, so a concurrent reader sees either the previous payload or the complete new one, never a partially written file.',
           },
           {
             kind: 'code',
             language: 'js',
-            caption: 'publishWindowsExecutable in windows-build.service.mjs.',
-            code: `function renamePublishedExecutable(pendingExe, publishExe) {
+            caption: 'renameStagedPayload and stageWindowsPayload in windows-build.service.mjs.',
+            code: `function renameStagedPayload(pendingExe, payloadExe) {
   const maxAttempts = 20;
   const retryDelayMs = 500;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
-      renameSync(pendingExe, publishExe);
+      renameSync(pendingExe, payloadExe);
       return;
     } catch (error) {
       if (attempt < maxAttempts && isFileLockError(error)) {
         if (attempt === 1) {
-          console.log(\`[build_desktop_app] published executable is busy; retrying replacement of \${publishExe}\`);
+          console.log(\`[build_desktop_app] staged payload is busy; retrying replacement of \${payloadExe}\`);
         }
         sleepMs(retryDelayMs);
         continue;
@@ -113,30 +125,28 @@ npm run build:desktop -- windows`,
   }
 }
 
-function publishWindowsExecutable(stagingDir) {
+function stageWindowsPayload(stagingDir) {
   const stagedExe = resolve(stagingDir, \`\${APP_NAME}.exe\`);
-  const publishDir = resolve(PROJECT_ROOT, WINDOWS_PUBLISH_DIR);
-  const publishExe = resolve(publishDir, \`\${APP_NAME}.exe\`);
+  const payloadDir = resolve(PROJECT_ROOT, WINDOWS_PAYLOAD_DIR);
+  const payloadExe = resolve(payloadDir, \`\${APP_NAME}.exe\`);
 
   if (!existsSync(stagedExe)) {
     throw new Error(\`PyInstaller did not produce staged executable: \${stagedExe}\`);
   }
 
-  ensureDirectory(publishDir);
-  copyLegalMaterial(stagingDir);
+  ensureDirectory(payloadDir);
 
-  const pendingExe = resolve(publishDir, \`\${APP_NAME}.exe.pending-\${randomUUID().replace(/-/g, '').slice(0, 12)}\`);
+  const pendingExe = resolve(payloadDir, \`\${APP_NAME}.exe.pending-\${randomUUID().replace(/-/g, '').slice(0, 12)}\`);
 
   try {
     copyFileSync(stagedExe, pendingExe);
-    renamePublishedExecutable(pendingExe, publishExe);
-    copyLegalMaterial(publishDir);
-    console.log(\`[build_desktop_app] published Windows executable: \${publishExe}\`);
+    renameStagedPayload(pendingExe, payloadExe);
+    console.log(\`[build_desktop_app] staged Windows application payload: \${payloadExe}\`);
   } catch (error) {
     removeIfExists(pendingExe);
 
     if (isFileLockError(error)) {
-      throw new Error(\`Could not publish \${publishExe}: the file is in use. Close any running \${APP_NAME}.exe (and any window previewing it), then run the build again.\`, { cause: error });
+      throw new Error(\`Could not stage \${payloadExe}: the file is in use. Close any running \${APP_NAME}.exe (and any window previewing it), then run the build again.\`, { cause: error });
     }
 
     throw error;
@@ -145,11 +155,11 @@ function publishWindowsExecutable(stagingDir) {
           },
           {
             kind: 'paragraph',
-            text: 'The function refuses two conditions in opposite registers. A missing staged executable throws, because there is no output to publish. A busy publish target raising `EPERM`, `EBUSY`, or `EACCES` is retried through `renamePublishedExecutable`, because antivirus or the shell can hold a freshly written executable for a moment; a target still locked after every retry — a genuinely running instance — raises a hard error and leaves no successful result that could preserve the previous executable as the published build. A rebuild therefore cannot exit successfully while `dist/windows/Ludoxel.exe` still holds the prior build, so a stale executable can never be mistaken for the rebuilt one.',
+            text: 'The function refuses one condition and retries another. A missing staged executable throws, because there is no output to stage. A busy staging target raising `EPERM`, `EBUSY`, or `EACCES` is retried through `renameStagedPayload`, because antivirus or the shell can hold a freshly written executable for a moment; a target still locked after every retry — a genuinely running instance — raises a hard error and leaves the previous staged payload untouched. A build therefore cannot exit successfully while `build/desktop-payloads/windows/Ludoxel.exe` still holds the prior build under a lock the retries could not clear, so a stale payload can never be mistaken for the rebuilt one.',
           },
           {
             kind: 'paragraph',
-            text: 'When the `published Windows executable` line is emitted, it certifies only that the copy, the retried rename, and the trailing legal copy completed. It does not establish that the binary launches on a clean host, that the package data is complete, or that anyone may circulate it. The legal copy inside the function keeps the controlling text adjacent to the executable; adjacency is retention, not authorization.',
+            text: 'When the `staged Windows application payload` line is emitted, it certifies only that the copy and the retried rename completed. It does not establish that the binary launches on a clean host, that the package data is complete, or that anyone may circulate it, and it does not by itself place anything inside `dist/windows`: turning this payload into the artifact a Licensee installs is a separate step the installer build owns.',
           },
         ],
       },
@@ -159,21 +169,21 @@ function publishWindowsExecutable(stagingDir) {
         content: [
           {
             kind: 'paragraph',
-            text: 'A Windows artifact is adjudicated from the command surface inward. Each fact comes from the layer that produced it.',
+            text: 'A Windows payload is adjudicated from the command surface inward. Each fact comes from the layer that produced it.',
           },
           {
             kind: 'list',
             ordered: true,
             items: [
               "Read the printed PyInstaller command, generated spec, and generated hook, and confirm one-file mode, the `console` policy (`False`, or `True` only under `--developer-console`), the declared data roots, the `collect_data_files('ludoxel')` collection, the bootstrap hidden imports, the OpenGL hook path, the DLL guard, and the entry script.",
-              'Confirm the publication line. A `published Windows executable` line and a `published executable is locked` line are different outcomes and must never be conflated.',
-              'Inspect `dist/windows` on disk for `Ludoxel.exe` and for the `LICENSE` and `third-party` material that `copyLegalMaterial` writes beside it.',
+              'Confirm the staging line. A `staged Windows application payload` line and a `staged payload is busy` line are different outcomes and must never be conflated.',
+              'Inspect `build/desktop-payloads/windows` on disk for `Ludoxel.exe`, and confirm the License Text module `generateLicenseTextModule` wrote before the PyInstaller command ran.',
               'Read the repository checks as separate predicates, not as one release verdict.',
             ],
           },
           {
             kind: 'paragraph',
-            text: 'A dry run exercises only the first item: it prints the constructed command and the generated spec, then returns before host enforcement, native building, spec writing, and publication, producing no `dist/windows/Ludoxel.exe`.',
+            text: 'A dry run exercises only the first item: it prints the constructed command and the generated spec, then returns before host enforcement, native building, spec writing, and staging, producing no `build/desktop-payloads/windows/Ludoxel.exe`.',
           },
           {
             kind: 'code',
@@ -183,7 +193,7 @@ function publishWindowsExecutable(stagingDir) {
           },
           {
             kind: 'paragraph',
-            text: 'A completed executable that lacks the copied legal material is defective as a distribution artifact even when it launches locally, because the controlling text has been severed from the file it governs. The dry-run command and the real build answer different questions; an inspection that borrows a conclusion from one to characterize the other is invalid.',
+            text: 'A staged payload never reaches a Licensee by itself; it is an installer build input, and the installer build is where the License Text gate, payload manifest, and final publication are evidenced. The dry-run command and the real build answer different questions; an inspection that borrows a conclusion from one to characterize the other is invalid.',
           },
         ],
       },
@@ -194,19 +204,19 @@ function publishWindowsExecutable(stagingDir) {
           {
             kind: 'paragraph',
             text: [
-              '`windows-build.service.mjs` creates a staged executable, checks its presence, copies the configured legal material, and then publishes `Ludoxel.exe` into `dist/windows`. Distribution permission, Official Distribution status, and third-party clearance remain fixed by their controlling legal sources. Whether the executable may be published as an official build is fixed by the controlling ',
+              '`windows-build.service.mjs` creates a staged executable, checks its presence, and stages `Ludoxel.exe` into `build/desktop-payloads/windows`. Distribution permission, Official Distribution status, and third-party clearance remain fixed by their controlling legal sources. Whether the payload may reach a Licensee inside an installer build is fixed by the controlling ',
               { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
               ', not by the build tool, whose competence ends at what is constructed and where it is written.',
             ],
           },
           {
             kind: 'paragraph',
-            text: 'The Windows path yields evidence, not authority. It identifies what the artifact is, which command produced it, which adjacent files must travel with it, and which output lines must be read before the artifact is described to anyone; it does not convert a successful local build into a permission.',
+            text: 'The Windows path yields evidence, not authority. It identifies what the payload is, which command produced it, which downstream build consumes it, and which output lines must be read before the artifact is described to anyone; it does not convert a successful local build into a permission.',
           },
         ],
       },
     ],
-    relatedTitles: ['Running a Desktop Build with Permission', 'Reading Build Output', 'Including License Text', 'Understanding Distribution Materials'],
+    relatedTitles: ['Running a Desktop Build with Permission', 'Reading Build Output', 'Including License Text', 'Understanding Distribution Materials', 'Understanding the Windows Installer', 'Running an Installer Build with Permission'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -214,7 +224,7 @@ function publishWindowsExecutable(stagingDir) {
     group: 'Platform Packages',
     title: 'Understanding the macOS Application Bundle',
     description:
-      'Delimits the threshold at which a directory becomes the repository-produced macOS .app artifact: the windowed PyInstaller command and its WGPU renderer envelope, Info.plist identity, ad-hoc codesign and verification, bounded bundled-resource tolerance, and the exclusion of Apple release work from the tool path.',
+      'Delimits the threshold at which a directory becomes the repository-produced macOS .app application payload: the windowed PyInstaller command and its WGPU renderer envelope, Info.plist identity, ad-hoc codesign and verification, bounded bundled-resource tolerance, and the exclusion of Apple release work from the tool path.',
     sections: [
       {
         id: 'understanding-the-macos-application-bundle-owner-files',
@@ -222,7 +232,11 @@ function publishWindowsExecutable(stagingDir) {
         content: [
           {
             kind: 'paragraph',
-            text: 'The macOS artifact threshold is not satisfied by a directory name. `Ludoxel.app` under `dist/macos` is the artifact only when the repository-defined bundle identity, executable payload, renderer envelope, required resources, copied legal material, and local signature verification all survive the publication path; anything short of that is an incomplete or unverified output, not a macOS release candidate. The owners are `buildMacosPyinstallerCommand` in `tools/build_desktop_app/src/command/pyinstaller/build-command.pyinstaller.mjs`, the verification and publication path in `tools/build_desktop_app/src/service/macos-build.service.mjs`, and the prerequisite inspector in `tools/build_desktop_app/src/service/macos-status.service.mjs`.',
+            text: [
+              'The macOS artifact threshold is not satisfied by a directory name. `Ludoxel.app` under `build/desktop-payloads/macos` is an application payload only when the repository-defined bundle identity, executable payload, renderer envelope, required resources, and local signature verification all survive the staging path; anything short of that is an incomplete or unverified output, not a usable payload. The owners are `buildMacosPyinstallerCommand` in `tools/build_desktop_app/src/command/pyinstaller/build-command.pyinstaller.mjs`, the verification and staging path in `tools/build_desktop_app/src/service/macos-build.service.mjs`, and the prerequisite inspector in `tools/build_desktop_app/src/service/macos-status.service.mjs`. This payload is not the artifact a Licensee receives: ',
+              { kind: 'link', label: 'Running an Installer Build with Permission', href: '/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission' },
+              ' owns the offline installer build that embeds it and writes `dist/macos/Ludoxel Installer.app`.',
+            ],
           },
           {
             kind: 'paragraph',
@@ -237,7 +251,7 @@ npm run build:macos:check`,
           },
           {
             kind: 'paragraph',
-            text: 'Where the Windows artifact is a single file plus adjacent legal material, the macOS artifact is a container whose identity is distributed across `Contents/MacOS`, `Contents/Resources`, `Contents/Frameworks`, `Info.plist`, bundled resources, the Python shared-library link, copied legal material, and the final signature state. The evidentiary threshold is correspondingly higher: each of those must be present for the container to count as the artifact, and a directory carrying the name supplies none of them on its own.',
+            text: 'Where the Windows payload is a single file, the macOS payload is a container whose identity is distributed across `Contents/MacOS`, `Contents/Resources`, `Contents/Frameworks`, `Info.plist`, bundled resources, the Python shared-library link, and the final signature state. The evidentiary threshold is correspondingly higher: each of those must be present for the container to count as the payload, and a directory carrying the name supplies none of them on its own.',
           },
         ],
       },
@@ -247,7 +261,11 @@ npm run build:macos:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects the `wgpu` native binaries and package data with `--collect-binaries wgpu` and `--collect-data wgpu`, and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`, so the wgpu-native Metal runtime and the rendercanvas Qt backend are bundled while optional wgpu submodules such as the imgui demo integration are left uncollected; `addMacosRequiredDataArgs` adds `assets`, `src`, and `third-party` as required data and asserts the default Timo skin, while the publish-time legal copy retains `LICENSE` beside the bundle. macOS packaging requires those inputs; their absence aborts the command.',
+            text: [
+              'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects the `wgpu` native binaries and package data with `--collect-binaries wgpu` and `--collect-data wgpu`, and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`, so the wgpu-native Metal runtime and the rendercanvas Qt backend are bundled while optional wgpu submodules such as the imgui demo integration are left uncollected; `addMacosRequiredDataArgs` adds `assets` and `src` as required data and asserts the default Timo skin, and adds `third-party` through `directoryLegalMaterialPaths`, which admits only directory sources so a single-file `LICENSE` is never passed as an `--add-data` source. `generateLicenseTextModule` writes the License Text into a generated Python module the spec carries through the PYZ archive instead, the same mechanism ',
+              { kind: 'link', label: 'Including License Text', href: '/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text' },
+              ' describes for Windows. macOS packaging requires the `assets`, `src`, and `third-party` inputs; their absence aborts the command.',
+            ],
           },
           {
             kind: 'paragraph',
@@ -309,7 +327,7 @@ function verifyMacosCodeSignature(appPath) {
       },
       {
         id: 'understanding-the-macos-application-bundle-resource-tolerance',
-        title: 'Resource Verification and Publication',
+        title: 'Resource Verification and Staging',
         content: [
           {
             kind: 'paragraph',
@@ -339,7 +357,7 @@ function bundledAssetCandidates(relativeAssetPath) {
           },
           {
             kind: 'paragraph',
-            text: '`publishMacosApp` is the final writer of `dist/macos`. It patches the plist, signs and verifies the staged bundle, removes any existing published bundle, copies the staged bundle in with symlinks preserved, then signs and verifies the published copy before copying legal material beside it. Copying a signed bundle can disturb its signature. The published artifact therefore receives a fresh signature and verification pass.',
+            text: '`stageMacosPayload` is the final writer of `build/desktop-payloads/macos`. It patches the plist, signs and verifies the staged bundle, removes any existing payload, copies the staged bundle in with symlinks preserved, then signs and verifies the copy. Copying a signed bundle can disturb its signature. The staged payload therefore receives a fresh signature and verification pass after the copy, not only before it.',
           },
         ],
       },
@@ -349,16 +367,284 @@ function bundledAssetCandidates(relativeAssetPath) {
         content: [
           {
             kind: 'paragraph',
-            text: '`publishMacosApp` in `tools/build_desktop_app/src/service/macos-build.service.mjs` patches `Info.plist`, signs and verifies the staged `.app`, copies it to the configured publish directory, signs and verifies the published copy, and copies legal material beside the bundle. The resulting local bundle has evidence of that service path. Notarization, distribution-channel preparation, and public release authority require their separate platform and legal sources.',
+            text: '`stageMacosPayload` in `tools/build_desktop_app/src/service/macos-build.service.mjs` patches `Info.plist`, signs and verifies the staged `.app`, copies it to `MACOS_PAYLOAD_DIR`, and signs and verifies the copy. The resulting local payload has evidence of that service path. Notarization, distribution-channel preparation, and public release authority require their separate platform and legal sources.',
           },
           {
             kind: 'paragraph',
-            text: 'The macOS artifact threshold is satisfied only when the repository-defined bundle identity, executable payload, renderer envelope, required resources, copied legal material, and local signature verification all survive the publication path. Anything short of that is an incomplete or unverified output, never a macOS release.',
+            text: 'The macOS payload threshold is satisfied only when the repository-defined bundle identity, executable payload, renderer envelope, required resources, and local signature verification all survive the staging path. Anything short of that is an incomplete or unverified output, never a usable payload, and reaching a Licensee is a separate question the installer build answers.',
           },
         ],
       },
     ],
-    relatedTitles: ['Running a Desktop Build with Permission', 'Reading Build Output', 'Running Resource and Shader Checks with Permission', 'Understanding Distribution Materials'],
+    relatedTitles: ['Running a Desktop Build with Permission', 'Reading Build Output', 'Running Resource and Shader Checks with Permission', 'Understanding Distribution Materials', 'Understanding the macOS Installer', 'Running an Installer Build with Permission'],
+  }),
+  defineDocsArticle({
+    category: 'Distribution',
+    subcategory: 'Desktop Artifacts',
+    group: 'Platform Packages',
+    title: 'Understanding the Windows Installer',
+    description:
+      'Delimits the evidentiary conditions under which a Windows binary counts as the repository-produced Ludoxel installer: the embedded application payload and manifest, SHA-256 verification against that manifest before any extraction, the License Text scroll-and-consent gate, per-user installation without an elevation prompt, Installed Apps registration, and upgrade/downgrade handling.',
+    sections: [
+      {
+        id: 'understanding-the-windows-installer-owner-files',
+        title: 'Owner Files and Artifact Definition',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              '`dist/windows/ludoxel_installer.exe` is the artifact a Licensee downloads and runs; `tools/build_installer` publishes it as a single file, with no adjacent support directory. The owners are `src/ludoxel_installer/`, a Python package independent of `src/ludoxel/`’s four layers, and `tools/build_installer/`, the Node build tool that embeds a payload staged by `tools/build_desktop_app` (',
+              { kind: 'link', label: 'Understanding the Windows Executable', href: '/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-executable' },
+              ') into a PyInstaller onefile build of `src/ludoxel_installer/__main__.py`.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'PyInstaller onefile mode extracts its full contents into a temporary directory on every launch, and that self-extraction step has twice produced a repository-tracked defect on this codebase: a single-file `--add-data` destination equal to its source name once nested a file one directory level deeper than declared, and a plain command-line-argument onefile build of the installer later failed mid-launch while extracting a PyQt6-bundled runtime DLL. `buildWindowsInstallerPyinstallerCommand` in `tools/build_installer/src/command/pyinstaller/build-command.pyinstaller.mjs` generates a dedicated PyInstaller spec for the installer: a single `Analysis`/`EXE()` build with binary filtering and no `COLLECT()` step, the same structure `tools/build_desktop_app` already uses for `Ludoxel.exe`. The command-line-argument invocation responsible for the second defect had neither that spec nor that filtering.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The installer and the payload it embeds are both onefile builds, built from separate PyInstaller spec generators: `buildWindowsInstallerPyinstallerCommand` for `ludoxel_installer.exe`, and `tools/build_desktop_app`’s own spec builder for `Ludoxel.exe`. Windows Installed Apps runs `Uninstall Ludoxel.exe`, a copy of the installer executable placed in the install directory, as the uninstall entry point. A running executable cannot delete the directory containing itself. `remove_installed_files` in `src/ludoxel_installer/platforms/windows/uninstall.py` detects that condition and writes a temporary batch script to `%TEMP%` that retries `rmdir /s /q` against the install directory up to sixty times, two seconds apart, deleting itself once the directory is gone; `subprocess.Popen` launches that script detached, and the uninstaller reports completion once the script is scheduled, before the retry loop runs.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-windows-installer-manifest-and-verification',
+        title: 'Payload Manifest and Verification',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`generateManifest` in `tools/build_installer/src/service/manifest.service.mjs` records the schema version, the application version read from `package.json`, the target platform and normalized processor architecture, the payload file name and format, the payload size, the payload SHA-256, and the SHA-256 of the root `LICENSE` the manifest was generated against, and writes that record beside the staged payload before PyInstaller runs.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'verify_payload in src/ludoxel_installer/domain/payload/verification.py.',
+            code: `def verify_payload(payload_root: Path, current_platform: PlatformInfo) -> VerifiedPayload:
+  manifest = load_manifest(payload_root)
+
+  if manifest.platform != current_platform.platform_id:
+    raise PayloadVerificationError(
+      "This installer's embedded payload does not match the current operating system.",
+      detail=f"manifest.platform={manifest.platform!r}, running on {current_platform.platform_id!r}",
+    )
+
+  if manifest.architecture != current_platform.architecture:
+    raise PayloadVerificationError(
+      "This installer's embedded payload does not match the current processor architecture.",
+      detail=f"manifest.architecture={manifest.architecture!r}, running on {current_platform.architecture!r}",
+    )
+
+  expected_format = expected_payload_format(current_platform.platform_id)
+  if manifest.payload_format != expected_format:
+    raise PayloadVerificationError(
+      "This installer's embedded payload is not in the expected format.",
+      detail=f"manifest.payload_format={manifest.payload_format!r}, expected {expected_format!r}",
+    )
+
+  payload_path = Path(payload_root) / manifest.payload_file_name
+  if not payload_path.is_file():
+    raise PayloadVerificationError("This installer's embedded payload file is missing.", detail=f"missing {payload_path}")
+
+  actual_size = payload_path.stat().st_size
+  if actual_size != manifest.payload_size_bytes:
+    raise PayloadVerificationError(
+      "This installer's embedded payload size does not match its manifest.",
+      detail=f"expected {manifest.payload_size_bytes} bytes, found {actual_size} bytes at {payload_path}",
+    )
+
+  actual_sha256 = _sha256_file(payload_path)
+  if actual_sha256 != manifest.payload_sha256:
+    raise PayloadVerificationError(
+      "This installer's embedded payload failed integrity verification.",
+      detail=f"expected sha256={manifest.payload_sha256}, computed {actual_sha256} for {payload_path}",
+    )
+
+  license_identity = verify_license_identity(manifest.license_text_sha256)
+  if not license_identity.matches:
+    raise PayloadVerificationError(
+      "This installer's License Text does not match the License Text its payload manifest was built against.",
+      detail=f"installer license sha256={license_identity.installer_license_sha256}, manifest license sha256={license_identity.manifest_license_sha256}",
+    )
+
+  return VerifiedPayload(manifest=manifest, payload_path=payload_path)`,
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              'Six conditions must hold before extraction begins: platform match, architecture match, payload-format match, payload presence, payload size and SHA-256 match, and the installer’s own embedded License Text hashing to the same value the manifest was built against. The last check binds the installer’s License Text presentation to the payload it is about to install; a manifest built against a different License Text — or an installer whose embedded License Text was altered after the manifest was generated — fails verification before any file is written. `load_manifest` and `expected_payload_format` are owned by ',
+              { kind: 'link', label: 'Understanding Distribution Materials', href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials' },
+              '’s sibling implementation files `domain/payload/manifest.py` and `foundations/platform_info.py`; no installer network request participates in any of these checks.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-windows-installer-license-gate',
+        title: 'License Text Presentation and Consent Gate',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The installer presents the full License Text before any installation step runs, and the gate is enforced by two independent conditions rather than by dialog sequencing alone. `LicenseScrollState` in `domain/license_scroll_state.py` tracks the License Text view’s scrollbar value against its maximum and latches once the view has reached the end, invalidating the latch only if the content range itself changes; `ConsentState` in `domain/consent_state.py` requires both that latch and the checked "I have read and agree to the Ludoxel Independent License." checkbox before `can_proceed` is true. The "Agree and Install" button’s enabled state is bound directly to `can_proceed`.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'A "Third-Party Licenses" button opens a separate viewer listing each bundled third-party material next to its license text, reached from the same License screen without leaving the installer.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-windows-installer-installation-and-registration',
+        title: 'Per-User Installation and Registration',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Once verification passes and consent is given, `_install_windows` in `application/controller.py` extracts the payload, checks that no `Ludoxel.exe` process is currently running, evaluates `plan_installation` against any existing install receipt, and refuses to proceed if the installed version is newer than the payload’s version. `atomic_replace_executable` in `platforms/windows/install.py` then writes the payload to `%LOCALAPPDATA%\\Programs\\Ludoxel` under the current user’s own permissions, through a pending-file-plus-rename sequence retried against `EPERM`, `EBUSY`, and `EACCES` locks, and `write_install_receipt` records the installed version and timestamp for the next install or uninstall to read.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'register_uninstall_entry in src/ludoxel_installer/platforms/windows/registration.py.',
+            code: `def register_uninstall_entry(*, install_dir: Path, application_version: str, executable_path: Path, uninstaller_path: Path) -> None:
+  quoted_uninstaller = f'"{uninstaller_path}"'
+  values: dict[str, tuple[int, object]] = {
+    "DisplayName": (winreg.REG_SZ, DISPLAY_NAME),
+    "DisplayVersion": (winreg.REG_SZ, str(application_version)),
+    "Publisher": (winreg.REG_SZ, PUBLISHER),
+    "InstallLocation": (winreg.REG_SZ, str(install_dir)),
+    "DisplayIcon": (winreg.REG_SZ, str(executable_path)),
+    "UninstallString": (winreg.REG_SZ, f"{quoted_uninstaller} --uninstall"),
+    "QuietUninstallString": (winreg.REG_SZ, f"{quoted_uninstaller} --uninstall --quiet"),
+    "NoModify": (winreg.REG_DWORD, 1),
+    "NoRepair": (winreg.REG_DWORD, 1),
+  }
+
+  try:
+    with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, UNINSTALL_REGISTRY_SUBKEY, 0, winreg.KEY_WRITE) as key:
+      for name, (value_type, value) in values.items():
+        winreg.SetValueEx(key, name, 0, value_type, value)
+  except OSError as error:
+    raise RegistrationError("Ludoxel Installer could not register Ludoxel in Installed apps.", detail=str(error)) from error`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Registration writes to `HKEY_CURRENT_USER`, not `HKEY_LOCAL_MACHINE`, consistent with the per-user install location and the absence of an administrator-privileges prompt anywhere in the Windows install or registration path. `create_start_menu_shortcut` places a `.lnk` under the current user’s Start Menu through a generated PowerShell `WScript.Shell` script, avoiding a `pywin32` dependency for that single operation.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Uninstallation reverses registration before it removes files. `unregister_installation` in `platforms/windows/uninstall.py` removes the Start Menu shortcut and the Installed Apps registry key, and `remove_installed_files` then deletes the install directory; a running installed `Ludoxel.exe` copying its own executable cannot delete its own backing file, so `relaunch_outside_install_dir_if_needed` copies the uninstaller to a temporary directory and relaunches it there before either step runs. User runtime data lives at `%LOCALAPPDATA%\\Ludoxel`, a sibling of the install directory rather than a path inside it, so `remove_installed_files` never reaches it.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-windows-installer-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'A completed installation certifies that payload verification, extraction, per-user file placement, and Installed Apps registration each reached their success path on this host. It certifies nothing about whether any party may distribute the installer or its embedded payload, whether the installation is an official release, or whether the third-party material it carries has been cleared. Those questions remain fixed by the controlling ',
+              { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
+              ', not by a passing install or uninstall.',
+            ],
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding the Windows Executable', 'Running an Installer Build with Permission', 'Including License Text', 'Including Third Party License Text', 'Understanding the macOS Installer', 'Installing Ludoxel', 'Uninstalling Ludoxel'],
+  }),
+  defineDocsArticle({
+    category: 'Distribution',
+    subcategory: 'Desktop Artifacts',
+    group: 'Platform Packages',
+    title: 'Understanding the macOS Installer',
+    description:
+      'Delimits the evidentiary conditions under which a macOS .app bundle counts as the repository-produced Ludoxel installer: the same embedded manifest and SHA-256 verification the Windows installer performs, native macOS authorization for writing to /Applications, LaunchServices registration, and the boundary between local bundle handling and Apple release work.',
+    sections: [
+      {
+        id: 'understanding-the-macos-installer-owner-files',
+        title: 'Owner Files and Artifact Definition',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              '`dist/macos/Ludoxel Installer.app`, and the optional `Ludoxel-Installer.dmg` disk image beside it, is the artifact a Licensee downloads and runs. `tools/build_installer/src/service/macos-installer-build.service.mjs` embeds a payload staged by `tools/build_desktop_app` (',
+              { kind: 'link', label: 'Understanding the macOS Application Bundle', href: '/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-application-bundle' },
+              ') into a PyInstaller `--windowed` build of `src/ludoxel_installer/__main__.py`. Because a directory-based `.app` payload cannot be embedded through `--add-data` as a single opaque file, `archiveMacosPayload` first archives it with `tar`, preserving symlinks by omitting dereference, and the manifest records that archive as a `macos-app-bundle-tar` payload.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The `.dmg` is optional and non-blocking. `buildOptionalDmg` invokes `hdiutil create` against the published `.app`; if that step fails, the build logs the failure and continues, and the `.app` remains the artifact of record.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-macos-installer-shared-verification',
+        title: 'Shared Manifest and Verification Contract',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'The macOS installer verifies its embedded payload through the same `verify_payload` function, the same manifest schema, and the same License Text SHA-256 binding that ',
+              { kind: 'link', label: 'Understanding the Windows Installer', href: '/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer' },
+              ' describes; `src/ludoxel_installer/domain/` and `src/ludoxel_installer/foundations/` are shared across both platforms, and only `src/ludoxel_installer/platforms/` branches by operating system. `expected_payload_format` resolves `macos-app-bundle-tar` for the Darwin platform, so a Windows-built payload archive fails the format check before extraction on macOS, and vice versa.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'Extraction on macOS opens the tar archive with `filter="data"`, which preserves symbolic links and executable permission bits without granting the extracted members ownership or setuid bits beyond what the archive itself carries, into a temporary directory `create_temp_root` owns for the duration of the install.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-macos-installer-authorization-and-registration',
+        title: 'Applications Installation and Launch Services Registration',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Installation targets `/Applications/Ludoxel.app` directly; there is no per-user install location on macOS. `stage_and_replace` in `platforms/macos/bundle_replace.py` moves any existing bundle to a backup path, records a rollback step to restore it, moves the newly extracted bundle into place, and records a rollback step to remove it, then confirms the installed bundle’s `Contents/MacOS/Ludoxel` executable exists before discarding the backup.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: '_privileged_shell and _move in src/ludoxel_installer/platforms/macos/bundle_replace.py.',
+            code: `def _privileged_shell(command: str) -> None:
+  escaped = command.replace("\\\\", "\\\\\\\\").replace('"', '\\\\"')
+  script = f'do shell script "{escaped}" with administrator privileges'
+  completed = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, check=False, timeout=120)
+  if completed.returncode != 0:
+    raise InstallationError("Ludoxel Installer could not obtain permission to write to /Applications.", detail=completed.stderr.strip() or completed.stdout.strip())
+
+
+def _move(source: Path, destination: Path) -> None:
+  try:
+    shutil.move(str(source), str(destination))
+  except PermissionError:
+    _privileged_shell(f"mv {_quote(source)} {_quote(destination)}")`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The installer moves and removes bundle paths directly first, and only falls back to `osascript … with administrator privileges` when that direct operation raises `PermissionError`. The authorization prompt this produces is the native macOS one; the installer never collects a password or credential itself, and nothing in `bundle_replace.py` requests elevation unconditionally. After installation, `register_with_launch_services` invokes the system `lsregister` tool against the installed bundle path so Spotlight and Launchpad recognize it without a reboot or manual re-registration; a failure from that call is silently tolerated, because macOS ordinarily discovers a bundle under `/Applications` through its own periodic scans regardless.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-macos-installer-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'A completed installation certifies that payload verification, archive extraction, bundle replacement, and Launch Services registration each reached their success path on this host. It certifies nothing about Apple notarization, Gatekeeper acceptance, whether any party may distribute the installer or its embedded payload, or whether the installation is an official release. Those questions remain fixed by the controlling ',
+              { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
+              ' and, for Apple’s own distribution requirements, by platform and legal sources this tool does not reach.',
+            ],
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding the macOS Application Bundle', 'Running an Installer Build with Permission', 'Including License Text', 'Including Third Party License Text', 'Understanding the Windows Installer', 'Installing Ludoxel'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -502,93 +788,108 @@ npm run build:native:check`,
     group: 'Legal Material Inclusion',
     title: 'Including License Text',
     description:
-      'Defines legal-material inclusion as a retention requirement in build_desktop_app, not as permission: the configured material set, the copy service and its existence-guarded operation that turns omission into a recorded artifact defect, the Windows and macOS publish coordinates, and the repository legal check.',
+      'Defines how the application payload carries its own License Text and Third-Party License Text at runtime: the directory-only PyInstaller data embedding third-party keeps, the generated-source embedding License Text now uses instead, the Legal Information settings surface that reads both, and the boundary between that embedding and the Installer’s own separately collected copy.',
     sections: [
       {
         id: 'including-license-text-owner-files',
-        title: 'Owner Files and Retention Premise',
+        title: 'Owner Files and Embedding Premise',
         content: [
           {
             kind: 'paragraph',
-            text: 'Including the License Text in a desktop artifact is a retention requirement, fixed by `LEGAL_MATERIAL_PATHS` in `tools/build_desktop_app/src/config/build.config.mjs`, the copy service in `tools/build_desktop_app/src/service/legal-copy.service.mjs`, and the existence-guarded helper `copyIfExists` in `tools/build_desktop_app/src/shared/file/path.file.mjs`. The configured copy set is `LICENSE` and `third-party`. PyInstaller bundles `third-party` among its data arguments — optionally on Windows, as a required input on macOS — while `LICENSE` is retained for the artifact only by the publish-time copy, because the application does not read it at runtime and a root-level one-file `LICENSE` data entry fails extraction by the bootloader. The requirement keeps the controlling and attribution material physically adjacent to the artifact.',
+            text: 'Every desktop application payload carries the material `LEGAL_MATERIAL_PATHS` in `tools/build_desktop_app/src/config/build.config.mjs` names, `LICENSE` and `third-party`, but the two travel through different mechanisms into the same running process. `third-party` is a directory; `directoryLegalMaterialPaths` in `tools/build_desktop_app/src/command/pyinstaller/build-command.pyinstaller.mjs` filters `LEGAL_MATERIAL_PATHS` down to directory sources and PyInstaller copies its contents into a same-named data folder, the same treatment `assets` and `src/ludoxel` already receive. `LICENSE` is a single file, and PyInstaller’s onefile data destination is always a target *folder*: a file source placed under a destination equal to its own name lands nested one level below where the running application looks for it, not at that path. `license-codegen.service.mjs` avoids that nesting entirely by not routing `LICENSE` through `--add-data` at all.',
           },
           {
             kind: 'paragraph',
-            text: 'The reach of that retention is exactly one proposition: the controlling text travels physically with the artifact it governs. Distribution permission, official-release status, a recipient’s standing as an authorized distributor, and every reservation in the controlling text are fixed by the License Text, and the copy step reaches none of them — it places `LICENSE` and `third-party` beside the artifact and stops there. Severance of that material is an artifact defect, while its adjacency is retention, and retention is not authority.',
+            text: '`generateLicenseTextModule` in `tools/build_desktop_app/src/service/license-codegen.service.mjs` reads the root `LICENSE` file and writes its exact text into a generated Python source module as a string literal, so the License Text ships inside the PYZ bytecode archive PyInstaller already builds from the application’s own Python source, the same archive that carries every other module the entry script imports. `runWindowsBuild` and `runMacosBuild` call this generator immediately before the PyInstaller subprocess runs. The generated module is not committed: `.gitignore` excludes `src/ludoxel/presentation/documentation/legal/_generated_license_text.py`, and a source-tree run that has never executed the generator has no such file to import.',
           },
           {
             kind: 'note',
             note: {
               type: 'warning',
-              content: 'A package containing `LICENSE` may still be unauthorized; a package lacking `LICENSE` is defective even where a repository surface can be opened in a browser. Presence of the text and permission to distribute are independent and must not be inferred from one another.',
+              content: 'A payload’s License Text and Third-Party License Text presence do not by themselves establish distribution permission, official-release status, or a recipient’s standing as an authorized distributor. Those remain fixed by the controlling License Text; embedding is retention, not authority.',
             },
           },
         ],
       },
       {
-        id: 'including-license-text-copy-service',
-        title: 'The Copy Service',
+        id: 'including-license-text-generated-module',
+        title: 'The Generated License Module',
         content: [
           {
             kind: 'paragraph',
-            text: '`copyLegalMaterial` writes the configured material into a single target directory. It iterates the fixed `LEGAL_MATERIAL_PATHS` list, mutates that directory, and logs each path as copied or skipped. The build record therefore identifies the material that reached the target.',
+            text: 'JSON string escaping and a Python double-quoted string literal agree on every sequence `JSON.stringify` can produce — `\\"`, `\\\\`, `\\n`, `\\r`, `\\t`, and `\\uXXXX` — so `generateLicenseTextModule` reuses `JSON.stringify` as its Python-string escaper instead of writing a bespoke one.',
           },
           {
             kind: 'code',
             language: 'js',
-            caption: 'copyLegalMaterial in legal-copy.service.mjs.',
-            code: `export function copyLegalMaterial(targetDir) {
-  for (const relativePath of LEGAL_MATERIAL_PATHS) {
-    const copied = copyIfExists(resolve(PROJECT_ROOT, relativePath), resolve(targetDir, relativePath));
-    if (copied) {
-      console.log(\`[build_desktop_app] copied legal material: \${relativePath}\`);
-    } else {
-      console.log(\`[build_desktop_app] legal material not found, skipped: \${relativePath}\`);
-    }
+            caption: 'buildPythonModuleSource and generateLicenseTextModule in license-codegen.service.mjs.',
+            code: `function buildPythonModuleSource(licenseText) {
+  const literal = JSON.stringify(licenseText);
+
+  return \`from __future__ import annotations
+
+LICENSE_TEXT: str = \${literal}
+\`;
+}
+
+export function generateLicenseTextModule() {
+  const licensePath = resolve(PROJECT_ROOT, 'LICENSE');
+  if (!existsSync(licensePath)) {
+    throw new Error(\`Root LICENSE is missing: \${licensePath}\`);
   }
+
+  const licenseText = readFileSync(licensePath, 'utf8');
+  const outputPath = resolve(PROJECT_ROOT, GENERATED_LICENSE_MODULE_RELATIVE_PATH);
+  ensureDirectory(dirname(outputPath));
+  writeFileSync(outputPath, buildPythonModuleSource(licenseText));
+
+  return outputPath;
 }`,
           },
           {
             kind: 'paragraph',
-            text: 'It delegates the move to `copyIfExists`, which signals an absent source with `false` and leaves no fabricated target material.',
-          },
-          {
-            kind: 'code',
-            language: 'js',
-            caption: 'copyIfExists in path.file.mjs.',
-            code: `export function copyIfExists(source, destination) {
-  if (!existsSync(source)) return false;
-  ensureDirectory(dirname(destination));
-  cpSync(source, destination, { recursive: true, force: true });
-  return true;
-}`,
-          },
-          {
-            kind: 'paragraph',
-            text: 'Because the move is existence-guarded and returns a boolean, a missing `LICENSE` produces a recorded `skipped` line and the build continues. The build record is the evidence that legal material was retained, and a `skipped` line is the precise point at which the artifact becomes defective. Package completeness requires every legal-material line to report a copied source.',
+            text: 'On the reading side, `ludoxel.presentation.documentation.legal.model.load_license_text` imports `LICENSE_TEXT` from that generated module and returns it; an `ImportError` — the module never having been generated, which is the ordinary state of an unbuilt source tree — falls back to `_dev_tree_license_text`, which walks upward from the package directory for a directory holding both `LICENSE` and `third-party` and reads the real root `LICENSE` file directly. A frozen build always has the generated module; a source-tree run always has the real file; neither path depends on a PyInstaller data-extraction step for this specific text.',
           },
         ],
       },
       {
-        id: 'including-license-text-publish-coordinates',
-        title: 'Publish Coordinates',
+        id: 'including-license-text-legal-information-surface',
+        title: 'The Legal Information Settings Surface',
         content: [
           {
             kind: 'paragraph',
-            text: 'The copy executes in platform-specific coordinates, and the inspection target follows them. On Windows, `publishWindowsExecutable` calls the copy service for the staging directory and for `dist/windows`, so the target is the directory holding `Ludoxel.exe`. On macOS, `publishMacosApp` writes legal material into `dist/macos` after the bundle is published, and the macOS prerequisite check additionally treats each configured legal-material path as a required input before a build is accepted.',
+            text: '`build_legal_tab` in `src/ludoxel/presentation/interface/settings/legal/page.py` is the reader for both halves of this embedding. It calls `load_license_text` for the License Text and `list_third_party_materials` in the same `model.py` for the Third-Party License Text, the latter still reading `resource_root / "third-party"` because that directory continues to arrive through PyInstaller’s ordinary data embedding rather than generated source. The tab is a sibling of the existing About tab in `SettingsOverlay`, added at sidebar index 6 with the same lazy-build-on-first-visit pattern About already used, not a section appended to About: About keeps sole ownership of the creator bio and etymology, and Legal Information keeps sole ownership of License Text and Third-Party License Text display.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Selecting an entry in the tab’s material list swaps the displayed text between the Ludoxel License Text and each detected third-party material; the list is populated from the same directory scan as the installer’s own Third-Party Licenses viewer, one entry per `third-party/` subdirectory holding a `LICENSE.txt`, so a repository that adds a new third-party material directory needs no code change here to surface it.',
+          },
+        ],
+      },
+      {
+        id: 'including-license-text-installer-boundary',
+        title: 'Installer Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'The application payload’s embedded License Text is not the same evidence as the ',
+              { kind: 'link', label: 'Installer', href: '/docs/distribution/desktop-artifacts/platform-packages/building-the-ludoxel-installer' },
+              '’s own copy. `tools/build_installer` collects `LICENSE` and `third-party` independently, into its own installer-staging `legal/` directory, for its License screen and Third-Party Licenses viewer; that collection runs whether or not an application payload has been built in the same session, and its correctness is the Installer article’s subject, not this one’s.',
+            ],
           },
           {
             kind: 'list',
             ordered: true,
             items: [
-              'For a Windows artifact, examine `dist/windows` for `LICENSE` and `third-party` beside `Ludoxel.exe`.',
-              'For a macOS artifact, examine the `dist/macos` directory that contains `Ludoxel.app`, because the copy writes beside the bundle.',
-              'After any later copy, compression, upload, or transfer, examine the transferred artifact again, because a downstream step can strip what the build correctly produced.',
+              'To inspect the application payload’s own copy, read the generated `_generated_license_text.py` after a build, or trust the source-tree fallback and read root `LICENSE` directly.',
+              'To inspect the Installer’s copy, open its License screen or its Third-Party Licenses viewer, or read `build/installer-staging/<platform>/legal/` after `tools/build_installer` stages it.',
+              'After any later copy, compression, or transfer of either artifact, examine the transferred artifact again, because a downstream step can strip what the build correctly produced.',
             ],
           },
           {
             kind: 'paragraph',
-            text: 'An inspection that examines only the executable, or only the bundle internals, while ignoring the surrounding publish directory is incomplete. The legal material resides in the publish coordinate system, and presence must be confirmed there.',
+            text: 'An inspection that treats one embedding as evidence for the other is incomplete. The application payload and the Installer are separate PyInstaller builds with separate legal-material collection, and presence must be confirmed in each independently.',
           },
         ],
       },
@@ -608,7 +909,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'The result establishes the presence of the root `LICENSE` at check time. Artifact retention is established by inspecting the publish directory after `copyLegalMaterial` runs. Third-party notice coverage and distribution authority follow their own source texts and artifact evidence.',
+            text: 'The result establishes only the presence of the root `LICENSE` in the Current Repository at check time. It says nothing about whether `generateLicenseTextModule` has run for a given build, whether the generated module’s content still matches that root file, or whether the Installer’s independently collected copy is current; those are established by rebuilding and by inspecting the resulting artifact, not by this check. Third-party notice coverage and distribution authority follow their own source texts and artifact evidence.',
           },
         ],
       },
@@ -619,9 +920,9 @@ npm run build:native:check`,
           {
             kind: 'paragraph',
             text: [
-              '`copyLegalMaterial` iterates `LEGAL_MATERIAL_PATHS` and calls `copyIfExists` for each target path, recording copied and skipped material. License grants, Original Materials, Distribution Materials, and repository visibility remain fixed by the controlling ',
+              '`generateLicenseTextModule`, `directoryLegalMaterialPaths`, and `build_legal_tab` place License Text and Third-Party License Text where the running application, and separately the Installer, can display them. License grants, Original Materials, Distribution Materials, and repository visibility remain fixed by the controlling ',
               { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
-              ' and the Legal category. Its scope is operational: the required material, the service that copies it, the publish coordinates, the check that reads the repository, and the defects produced by omission.',
+              ' and the Legal category. Their scope is operational: which mechanism carries which material into which running process, and the defects produced by an omission in either.',
             ],
           },
           {
@@ -631,14 +932,14 @@ npm run build:native:check`,
         ],
       },
     ],
-    relatedTitles: ['Including Third Party License Text', 'Running Package Checks with Permission', 'Understanding License Authority', 'Understanding Controlling Text'],
+    relatedTitles: ['Including Third Party License Text', 'Building the Ludoxel Installer', 'Running Package Checks with Permission', 'Understanding License Authority', 'Understanding Controlling Text'],
   }),
   defineDocsArticle({
     category: 'Distribution',
     subcategory: 'Runtime Inclusions',
     group: 'Legal Material Inclusion',
     title: 'Including Third Party License Text',
-    description: 'Explains third-party notice retention for the Kaisei Opti font through the repository notice, desktop legal-copy path, and macOS font-resource requirements.',
+    description: 'Explains third-party notice retention for the Kaisei Opti font through the repository notice, the directory-only PyInstaller data embedding that carries it into each platform payload, and macOS font-resource requirements.',
     sections: [
       {
         id: 'including-third-party-license-text-owner-files',
@@ -646,7 +947,7 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: '`third-party/kaisei-opti/LICENSE.txt` carries the Kaisei Opti notice in the repository. `LEGAL_MATERIAL_PATHS` includes `third-party`, and `copyLegalMaterial` copies that directory into each desktop publish directory.',
+            text: '`third-party/kaisei-opti/LICENSE.txt` carries the Kaisei Opti notice in the repository. `LEGAL_MATERIAL_PATHS` includes `third-party`, and `directoryLegalMaterialPaths` in `tools/build_desktop_app/src/command/pyinstaller/build-command.pyinstaller.mjs` admits it as a directory source, so PyInstaller embeds the whole `third-party` tree into each platform payload as ordinary application data, the same treatment `assets` and `src/ludoxel` receive.',
           },
           {
             kind: 'paragraph',
@@ -667,7 +968,7 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: '`checkLegal` resolves the root `LICENSE` through `LEGAL_PATHS.license`, fails when that file is absent, and records the displayed path when it exists. Third-party notice retention is established through the repository notice, the configured desktop copy path, and inspection of the published artifact.',
+            text: '`checkLegal` resolves the root `LICENSE` through `LEGAL_PATHS.license`, fails when that file is absent, and records the displayed path when it exists. Third-party notice retention is established through the repository notice, the directory-only PyInstaller data embedding, and inspection of the built payload.',
           },
           {
             kind: 'code',
@@ -696,7 +997,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'This command reports the root-license existence result. The Kaisei notice is inspected at `third-party/kaisei-opti/LICENSE.txt`, and packaged retention is inspected in the applicable publish directory.',
+            text: 'This command reports the root-license existence result. The Kaisei notice is inspected at `third-party/kaisei-opti/LICENSE.txt`, and packaged retention is inspected inside the built application payload, either through a runtime inspection tool for the packaged PyInstaller archive or through the running application’s own Legal Information settings tab, which reads the same embedded `third-party` directory.',
           },
         ],
       },
@@ -734,21 +1035,21 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Because `third-party` is a configured legal-material path, `copyLegalMaterial` writes it into each publish directory, so the notice travels from the repository root into the artifact.',
+            text: 'Because `third-party` is a configured legal-material path admitted as a directory source, PyInstaller embeds it directly into each platform payload during packaging; no separate copy step runs after the payload is built, so the notice travels from the repository root into the artifact in one operation.',
           },
           {
             kind: 'list',
             ordered: true,
             items: [
               'Confirm the notice exists at the repository root under `third-party/`.',
-              'For a Windows artifact, confirm `third-party` is beside `Ludoxel.exe` after the legal-copy step.',
-              'For a macOS artifact, confirm `third-party` is present in `dist/macos` after the bundle is published and verified.',
-              'After any later copy, compression, or transfer, examine the transferred artifact again, because PyInstaller internal data collection and the surrounding legal-copy step are distinct operations and a downstream step can strip the directory.',
+              'For a Windows payload, confirm `third-party` is embedded by inspecting the running application’s Legal Information tab, or by unpacking the built onefile archive with a PyInstaller-aware extraction tool.',
+              'For a macOS payload, confirm `third-party` is present under `Contents/Frameworks` or `Contents/Resources` inside the built `.app`, matching the two-location tolerance the macOS build already applies to other bundled resources.',
+              'After any later copy, compression, or transfer of the artifact, examine the transferred artifact again, because a downstream step can still strip data PyInstaller embedded correctly.',
             ],
           },
           {
             kind: 'paragraph',
-            text: 'Third-party license inclusion is therefore an end-to-end retention requirement, not a single build-time event. The repository can be correct and the build output can be correct, and a later packaging step can still strip the directory; only inspection of the transferred artifact confirms that retention survived.',
+            text: 'Third-party license inclusion is therefore an end-to-end retention requirement, not a single build-time event. The repository can be correct and the build output can be correct, and a later transfer step can still strip the directory; only inspection of the transferred artifact confirms that retention survived.',
           },
         ],
       },
@@ -759,14 +1060,14 @@ npm run build:native:check`,
           {
             kind: 'paragraph',
             text: [
-              '`third-party/kaisei-opti/LICENSE.txt` retains the SIL Open Font License text for Kaisei Opti. The artifact copy path preserves that notice; third-party redistribution terms and provenance-sensitive assets remain governed by their applicable legal sources. The full analysis of ',
+              '`third-party/kaisei-opti/LICENSE.txt` retains the SIL Open Font License text for Kaisei Opti. The payload’s embedded data preserves that notice; third-party redistribution terms and provenance-sensitive assets remain governed by their applicable legal sources. The full analysis of ',
               { kind: 'link', label: 'third-party material boundaries', href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-third-party-material-boundaries' },
               ' is fixed by the Data and Legal categories. Its scope is the operational retention of a named notice and the defects produced by omission.',
             ],
           },
           {
             kind: 'paragraph',
-            text: 'The rule is narrow. If an artifact carries third-party material, the corresponding notice must remain attached in the artifact’s publish coordinates. Attachment is evidence of notice retention; it is not proof of general legal clearance.',
+            text: 'The rule is narrow. If an artifact carries third-party material, the corresponding notice must remain embedded in that artifact. Embedding is evidence of notice retention; it is not proof of general legal clearance.',
           },
         ],
       },
@@ -919,7 +1220,7 @@ npm run build:macos -- --status`,
           },
           {
             kind: 'paragraph',
-            text: 'After the native phase, the service constructs tokenized PyInstaller work, spec, and staging roots under `build/`, prints the command, runs it with the resolved Python executable, publishes the artifact, and removes the tokenized roots unless `--keep-build-cache` is supplied. The order is the audit trail.',
+            text: 'After the native phase, the service constructs tokenized PyInstaller work, spec, and staging roots under `build/`, prints the command, runs it with the resolved Python executable, generates the License Text module, stages the application payload, and removes the tokenized roots unless `--keep-build-cache` is supplied. The order is the audit trail.',
           },
           {
             kind: 'list',
@@ -928,14 +1229,18 @@ npm run build:macos -- --status`,
               'Validate the target, host, and required inputs.',
               'Build native extensions unless `--skip-native-build` or a dry run, and stop on a nonzero native result.',
               'Construct and print the PyInstaller command.',
-              'Execute PyInstaller into tokenized staging roots under `build/`.',
-              'Publish the artifact into `dist/windows` or `dist/macos` and copy legal material.',
+              'Generate the License Text module and execute PyInstaller into tokenized staging roots under `build/`.',
+              'Stage the application payload into `build/desktop-payloads/windows` or `build/desktop-payloads/macos`.',
               'Remove tokenized build roots unless `--keep-build-cache` is supplied.',
             ],
           },
           {
             kind: 'paragraph',
-            text: 'The durable publish directories are `dist/windows` and `dist/macos`; the tokenized roots are implementation detail and part of the audit trail, not release locations. A staged artifact that survives a publication problem is not a published one, and the distinction must hold in any report.',
+            text: [
+              'The durable payload directories are `build/desktop-payloads/windows` and `build/desktop-payloads/macos`; the tokenized roots are implementation detail and part of the audit trail, not artifact locations. A staged output that survives a staging problem is not the payload the installer build consumes, and the distinction must hold in any report. Turning a payload into the artifact a Licensee installs is a separate operation ',
+              { kind: 'link', label: 'Running an Installer Build with Permission', href: '/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission' },
+              ' describes.',
+            ],
           },
         ],
       },
@@ -1049,11 +1354,11 @@ npm run build:macos -- --status`,
       },
       {
         id: 'reading-build-output-publication-results',
-        title: 'Publication and Verification Results',
+        title: 'Staging and Verification Results',
         content: [
           {
             kind: 'paragraph',
-            text: 'Windows and macOS report publication differently because the artifacts differ. Windows prints `published Windows executable` when `dist/windows/Ludoxel.exe` is replaced, and reports a preserved staged executable when the publish target remains locked. macOS prints a published app bundle after Info.plist patching, ad-hoc signing, verification, copying, re-signing, re-verification, and legal-material copying. Rust native verification prints each configured target and then requires its installed compiled artifact and imported compiled suffix; the Python fallback is an explicit failure state for this check.',
+            text: 'Windows and macOS report payload staging differently because the artifacts differ. Windows prints `staged Windows application payload` when `build/desktop-payloads/windows/Ludoxel.exe` is replaced, and reports a busy staging target when the payload path remains locked. macOS prints a staged application payload after Info.plist patching, ad-hoc signing, verification, copying, re-signing, and re-verification. Rust native verification prints each configured target and then requires its installed compiled artifact and imported compiled suffix; the Python fallback is an explicit failure state for this check.',
           },
           {
             kind: 'code',
@@ -1090,7 +1395,7 @@ npm run build:macos -- --status`,
           },
           {
             kind: 'paragraph',
-            text: 'Each message carries its own bounded result. A preserved staged Windows executable records a locked publish target, and only the `published Windows executable` line marks replacement of `dist/windows/Ludoxel.exe`. Rust native verification accepts a target after the installed artifact exists, the configured module imports from the repository source tree, and the imported file ends in the platform extension suffix. An ad-hoc verified macOS bundle records local signature integrity, while Developer ID signing and notarization remain outside the tool. A copied-legal-material line records retention at the publication path. Artifact descriptions derive from these individual results.',
+            text: 'Each message carries its own bounded result. A busy Windows staging target records a locked payload path, and only the `staged Windows application payload` line marks replacement of `build/desktop-payloads/windows/Ludoxel.exe`. Rust native verification accepts a target after the installed artifact exists, the configured module imports from the repository source tree, and the imported file ends in the platform extension suffix. An ad-hoc verified macOS bundle records local signature integrity, while Developer ID signing and notarization remain outside the tool. Artifact descriptions derive from these individual results.',
           },
         ],
       },
@@ -1110,6 +1415,120 @@ npm run build:macos -- --status`,
       },
     ],
     relatedTitles: ['Running a Desktop Build with Permission', 'Understanding the Windows Executable', 'Understanding the macOS Application Bundle', 'Running Package Checks with Permission'],
+  }),
+  defineDocsArticle({
+    category: 'Distribution',
+    subcategory: 'Build Operation',
+    group: 'Local Build Procedure',
+    title: 'Running an Installer Build with Permission',
+    description:
+      'Defines the command surface of build_installer as a containment device layered above build_desktop_app: parsing and validation, task dispatch into per-platform staging and PyInstaller construction, payload delegation to the desktop build, manifest generation, and atomic publication into dist — and the refusal to read a passing installer check as release authority.',
+    sections: [
+      {
+        id: 'running-an-installer-build-with-permission-authority-premise',
+        title: 'Authority Premise',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Running the local installer build presupposes the same authority premise as running the desktop build: the operator already holds authority under the controlling License Text or a separate competent written permission, and a package script existing is not that authority. `tools/build_installer` is a second containment layer above `tools/build_desktop_app`, not a competing one. `parseInstallerBuildArgs`, `validateInstallerBuildArgs`, and `runInstallerBuildTask` narrow a terminal request into a configured platform task, staging sequence, and PyInstaller invocation, exactly as the desktop build tool does for the application payload it consumes.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'The installer build path records validation, dispatch, payload delegation, manifest generation, subprocess construction, staging, and publication. Permission to build, distribute, publish, mirror, or upload the installer or the Ludoxel application it embeds remains with the License Text and any later competent written instrument.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'running-an-installer-build-with-permission-parse-validate',
+        title: 'Parsing and Validation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`parseInstallerBuildArgs` reads the command line, recognizing the `windows` and `macos` targets, the flags `--dry-run`, `--skip-payload-build`, `--skip-native-build`, `--keep-build-cache`, and `--check`, and a help-language selection; it records a conflict when two targets are declared and refuses unknown options and commands. `validateInstallerBuildArgs` then resolves the default target to `windows` when none is given and no help was requested, and rejects an unsupported language. The targets and diagnostic modes are reached through the package scripts:',
+          },
+          {
+            kind: 'code',
+            language: 'sh',
+            caption: 'Installer build invocations from package.json.',
+            code: `npm run build:installer:windows
+npm run build:installer:windows:check
+npm run build:installer:macos
+npm run build:installer:macos:check
+npm run build:installer:check`,
+          },
+        ],
+      },
+      {
+        id: 'running-an-installer-build-with-permission-dispatch',
+        title: 'Task Dispatch and Payload Delegation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`runInstallerBuildTask` narrows a validated option set to a single platform-specific service execution, and `--check` short-circuits into the platform packaging-input check before any PyInstaller invocation runs.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'runInstallerBuildTask in service/task.service.mjs.',
+            code: `export async function runInstallerBuildTask(options, context = {}) {
+  if (options.command === 'windows') {
+    if (options.check) {
+      return checkWindowsInstallerInputs();
+    }
+    return runWindowsInstallerBuild({ ...options, env: context.env });
+  }
+
+  if (options.command === 'macos') {
+    if (options.check) {
+      return checkMacosInstallerInputs();
+    }
+    return runMacosInstallerBuild({ ...options, env: context.env });
+  }
+
+  console.error(\`Unknown installer build command: \${options.command}\`);
+  return 2;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              'Unless `--skip-payload-build` is given, `runWindowsInstallerBuild` and `runMacosInstallerBuild` first invoke `buildApplicationPayload`, which runs `tools/build_desktop_app`’s own Windows or macOS build as a subprocess. The installer build never constructs the application payload itself; ',
+              { kind: 'link', label: 'Running a Desktop Build with Permission', href: '/docs/distribution/build-operation/local-build-procedure/running-a-desktop-build-with-permission' },
+              ' owns that step, and a nonzero exit from it stops the installer build before any staging occurs. A dry run stops even earlier, printing that staging and the PyInstaller invocation are skipped.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'running-an-installer-build-with-permission-staging-and-manifest',
+        title: 'Staging, Manifest Generation, and Publication',
+        content: [
+          {
+            kind: 'paragraph',
+            text: "After the payload build succeeds, the service stages installer inputs into `build/installer-staging/windows` or `build/installer-staging/macos`: the discovered application payload, the collected License Text and third-party materials, and a generated manifest recording schema version, application version, platform, architecture, payload file name, payload format, payload size, the payload SHA-256, and the License Text SHA-256. `buildWindowsInstallerPyinstallerCommand` generates a PyInstaller spec that embeds that staging directory directly in its `datas` list and collects the installer package’s own data through `collect_data_files('ludoxel_installer')`; `buildMacosInstallerPyinstallerCommand` instead constructs a command-line invocation that embeds the same staging directory through `--add-data` and `--collect-data ludoxel_installer`.",
+          },
+          {
+            kind: 'paragraph',
+            text: 'Publication differs by platform because the two build tools do not share one publish routine. On Windows, `atomicReplaceFile` stages the freshly built `ludoxel_installer.exe` beside the existing one under a pending name and renames it into place, retrying past transient locks, so a concurrent reader never observes a half-written installer. On macOS, `publishMacosInstaller` removes any existing published `.app`, copies the staged bundle in with `cp -R`, and `buildOptionalDmg` attempts an additional `.dmg` through `hdiutil`; a failed `.dmg` step is logged and does not fail the build, because the `.app` remains the primary artifact.',
+          },
+        ],
+      },
+      {
+        id: 'running-an-installer-build-with-permission-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A passing installer build or a passing `--check` establishes only that the named local steps completed: payload delegation succeeded, staging inputs were collected, the manifest was generated, PyInstaller exited zero, and the artifact was published to `dist/windows` or `dist/macos`. It does not establish that any party may distribute the installer, that the embedded payload is an official release, or that the third-party material it carries has been cleared. Those questions remain with the controlling License Text and separate release authority, exactly as they do for the application payload the installer embeds.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Running a Desktop Build with Permission', 'Understanding the Windows Installer', 'Understanding the macOS Installer', 'Including License Text', 'Including Third Party License Text'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -1545,39 +1964,34 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
         content: [
           {
             kind: 'paragraph',
-            text: 'The publish coordinates make the same separation concrete. The artifact is named `Ludoxel.exe` or `Ludoxel.app` and is written under `dist/windows` or `dist/macos`, all declared constants in the build configuration.',
+            text: [
+              'The publish coordinates make the same separation concrete, and the layer that owns them has moved. `tools/build_desktop_app` no longer writes into `dist/`; it stages `Ludoxel.exe` and `Ludoxel.app` as application payloads under `build/desktop-payloads/`, which ',
+              { kind: 'link', label: 'Running an Installer Build with Permission', href: '/docs/distribution/build-operation/local-build-procedure/running-an-installer-build-with-permission' },
+              ' consumes. The public artifact is named `ludoxel_installer.exe` or `Ludoxel Installer.app` and is written under `dist/windows` or `dist/macos`, all declared constants in `tools/build_installer/src/config/build.config.mjs`.',
+            ],
           },
           {
             kind: 'code',
             language: 'js',
-            caption: 'Artifact name and publish directories declared in build.config.mjs.',
-            code: `export const APP_NAME = 'Ludoxel';
+            caption: 'Installer artifact names and publish directories declared in build.config.mjs.',
+            code: `export const WINDOWS_INSTALLER_APP_NAME = 'ludoxel_installer';
+export const MACOS_INSTALLER_APP_NAME = 'Ludoxel Installer';
+export const MACOS_INSTALLER_BUNDLE_IDENTIFIER = 'com.kentokonishi.ludoxel.installer';
 
-export const WINDOWS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
-export const WINDOWS_ICON_CANDIDATE_PATHS = Object.freeze(['assets/app/icons/windows/app_icon_256x256.ico', 'assets/app/icons/windows/app_icon_128x128.ico', 'assets/app/icons/windows/app_icon_32x32.ico', 'assets/app/icons/windows/app_icon_16x16.ico']);
-export const WINDOWS_ICON_PATH = WINDOWS_ICON_CANDIDATE_PATHS[0];
-export const WINDOWS_PUBLISH_DIR = 'dist/windows';
-
-export const MACOS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
-export const MACOS_ICON_CANDIDATE_PATHS = Object.freeze([
-  'assets/app/icons/macos/app_icon_1024x1024.icns',
-  'assets/app/icons/macos/app_icon_512x512.icns',
-  'assets/app/icons/macos/app_icon_256x256.icns',
-  'assets/app/icons/macos/app_icon_128x128.icns',
-  'assets/app/icons/macos/app_icon_32x32.icns',
-  'assets/app/icons/macos/app_icon_16x16.icns',
-]);
-export const MACOS_ICON_PATH = MACOS_ICON_CANDIDATE_PATHS[0];
-export const MACOS_PUBLISH_DIR = 'dist/macos';`,
+export const WINDOWS_INSTALLER_PUBLISH_DIR = 'dist/windows';
+export const MACOS_INSTALLER_PUBLISH_DIR = 'dist/macos';
+export const WINDOWS_INSTALLER_ARTIFACT_NAME = \`\${WINDOWS_INSTALLER_APP_NAME}.exe\`;
+export const MACOS_INSTALLER_ARTIFACT_NAME = \`\${MACOS_INSTALLER_APP_NAME}.app\`;
+export const MACOS_INSTALLER_DMG_NAME = 'Ludoxel-Installer.dmg';`,
           },
           {
             kind: 'paragraph',
-            text: 'The name `Ludoxel` and the directory `dist` are construction labels emitted by the build configuration; they carry no grant. A file named `Ludoxel.exe` in `dist/windows` is the deterministic output of `publishWindowsExecutable`, and the name states what the tool built, not who may distribute it. To present that file as a release is to launder an artifact label into an authority label — to assert that the repository elevated the output into an official distribution when the publication function did nothing of the kind. A description that names the technical source and refuses any surplus authority is the only admissible form.',
+            text: 'The names `ludoxel_installer` and `Ludoxel Installer`, and the directory `dist`, are construction labels emitted by the build configuration; they carry no grant. A file named `ludoxel_installer.exe` in `dist/windows` is the deterministic output of `publishWindowsInstaller` in `tools/build_installer/src/service/windows-installer-build.service.mjs`, and the name states what the tool built, not who may distribute it. To present that file as a release is to launder an artifact label into an authority label — to assert that the repository elevated the output into an official distribution when the publication function did nothing of the kind. A description that names the technical source and refuses any surplus authority is the only admissible form.',
           },
           {
             kind: 'list',
             items: [
-              'Admissible: a local Windows build, a local macOS bundle, a PyInstaller output, a package candidate, a staged executable preserved after a locked publish target, or a repository check result.',
+              'Admissible: a local Windows build, a local macOS bundle, a PyInstaller output, a package candidate, a staged application payload, a locally built installer, or a repository check result.',
               'Inadmissible: official release, authorized public download, redistribution-ready package, legally cleared build, approved mirror, endorsed upload, or final release artifact, when the only evidence is local build output or tool success.',
             ],
           },
@@ -1604,7 +2018,7 @@ export const MACOS_PUBLISH_DIR = 'dist/macos';`,
           {
             kind: 'paragraph',
             text: [
-              '`APP_NAME`, `WINDOWS_PUBLISH_DIR`, `MACOS_PUBLISH_DIR`, and the platform status renderers name local artifact outputs. Official release status, distribution licensing, and publication authority remain with the Licensor under the controlling License Text, which defines an ',
+              '`APP_NAME`, `WINDOWS_INSTALLER_PUBLISH_DIR`, `MACOS_INSTALLER_PUBLISH_DIR`, and the platform status renderers name local artifact outputs. Official release status, distribution licensing, and publication authority remain with the Licensor under the controlling License Text, which defines an ',
               { kind: 'link', label: 'Official Distribution', href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials' },
               '. Its scope is the narrower problem of not attaching false release language to a technical artifact.',
             ],

@@ -7,7 +7,7 @@ export const APP_NAME = 'Ludoxel';
 export const WINDOWS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
 export const WINDOWS_ICON_CANDIDATE_PATHS = Object.freeze(['assets/app/icons/windows/app_icon_256x256.ico', 'assets/app/icons/windows/app_icon_128x128.ico', 'assets/app/icons/windows/app_icon_32x32.ico', 'assets/app/icons/windows/app_icon_16x16.ico']);
 export const WINDOWS_ICON_PATH = WINDOWS_ICON_CANDIDATE_PATHS[0];
-export const WINDOWS_PUBLISH_DIR = 'dist/windows';
+export const WINDOWS_PAYLOAD_DIR = 'build/desktop-payloads/windows';
 
 export const MACOS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
 export const MACOS_ICON_CANDIDATE_PATHS = Object.freeze([
@@ -19,7 +19,7 @@ export const MACOS_ICON_CANDIDATE_PATHS = Object.freeze([
   'assets/app/icons/macos/app_icon_16x16.icns',
 ]);
 export const MACOS_ICON_PATH = MACOS_ICON_CANDIDATE_PATHS[0];
-export const MACOS_PUBLISH_DIR = 'dist/macos';
+export const MACOS_PAYLOAD_DIR = 'build/desktop-payloads/macos';
 export const MACOS_BUNDLE_IDENTIFIER = 'com.kentokonishi.ludoxel';
 
 export const PYINSTALLER_WORK_ROOT = 'build/pyinstaller-runs';

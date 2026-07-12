@@ -2,10 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
 
-import { APP_NAME, MACOS_BUNDLE_IDENTIFIER, MACOS_ENTRY_SCRIPT, MACOS_ICON_CANDIDATE_PATHS, PYINSTALLER_SPEC_ROOT, PYINSTALLER_STAGING_ROOT, PYINSTALLER_WORK_ROOT, WINDOWS_ENTRY_SCRIPT, WINDOWS_ICON_CANDIDATE_PATHS } from '../../config/build.config.mjs';
+import { APP_NAME, LEGAL_MATERIAL_PATHS, MACOS_BUNDLE_IDENTIFIER, MACOS_ENTRY_SCRIPT, MACOS_ICON_CANDIDATE_PATHS, PYINSTALLER_SPEC_ROOT, PYINSTALLER_STAGING_ROOT, PYINSTALLER_WORK_ROOT, WINDOWS_ENTRY_SCRIPT, WINDOWS_ICON_CANDIDATE_PATHS } from '../../config/build.config.mjs';
 import { PROJECT_ROOT } from '../../config/path.config.mjs';
 
 function pyinstallerDataSeparator(targetPlatform = process.platform) {
@@ -35,12 +35,12 @@ function addRequiredDataArg(args, sourceRelativePath, destinationPath = sourceRe
   args.push('--add-data', addDataArg(sourceRelativePath, destinationPath, targetPlatform));
 }
 
+function directoryLegalMaterialPaths() {
+  return LEGAL_MATERIAL_PATHS.filter((relativePath) => existsSync(projectPath(relativePath)) && statSync(projectPath(relativePath)).isDirectory());
+}
+
 function windowsBundleDataEntries() {
-  const candidates = [
-    ['assets', 'assets'],
-    ['src/ludoxel', 'src/ludoxel'],
-    ['third-party', 'third-party'],
-  ];
+  const candidates = [['assets', 'assets'], ['src/ludoxel', 'src/ludoxel'], ...directoryLegalMaterialPaths().map((relativePath) => [relativePath, relativePath])];
 
   return candidates.filter(([sourceRelativePath]) => existsSync(projectPath(sourceRelativePath))).map(([sourceRelativePath, destinationPath]) => [projectPath(sourceRelativePath), destinationPath]);
 }
@@ -79,7 +79,9 @@ function addMacosRequiredDataArgs(args) {
 
   addRequiredDataArg(args, 'assets', 'assets', 'darwin');
   addRequiredDataArg(args, 'src', 'src', 'darwin');
-  addRequiredDataArg(args, 'third-party', 'third-party', 'darwin');
+  for (const legalMaterialPath of directoryLegalMaterialPaths()) {
+    addRequiredDataArg(args, legalMaterialPath, legalMaterialPath, 'darwin');
+  }
 }
 
 function resolveFirstExistingProjectPath(candidateRelativePaths, label, requiredExtension, { required = true } = {}) {

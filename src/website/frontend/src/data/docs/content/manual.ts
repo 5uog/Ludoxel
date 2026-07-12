@@ -7,6 +7,157 @@ import { defineDocsArticle, type DocsPageContent } from '../types';
 export const manualPages: DocsPageContent[] = [
   defineDocsArticle({
     category: 'Manual',
+    subcategory: 'Installing and Removing Ludoxel',
+    group: 'Desktop Installation',
+    title: 'Installing Ludoxel',
+    description:
+      'Walks a Licensee through the offline Ludoxel installer: the full License Text and its scroll-and-consent gate, the embedded payload manifest verification that runs before any file is written, the five progress stages from verification through registration, and the per-user install locations on Windows and macOS.',
+    sections: [
+      {
+        id: 'installing-ludoxel-what-runs',
+        title: 'The Downloaded File Is the Installer, Not Ludoxel Itself',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'A Windows download named `ludoxel_installer.exe` and a macOS download named `Ludoxel Installer.app` are the installer, built by `tools/build_installer`. Neither file is the Ludoxel application. `Ludoxel.exe` or `Ludoxel.app` sits inside the installer as an embedded payload, verified against a manifest and extracted only after the License Text gate below is satisfied. ',
+              { kind: 'link', label: 'Understanding the Windows Installer', href: '/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-installer' },
+              ' and ',
+              { kind: 'link', label: 'Understanding the macOS Installer', href: '/docs/distribution/desktop-artifacts/platform-packages/understanding-the-macos-installer' },
+              ' describe that embedding and verification at the implementation level; this page describes what the Licensee sees and does.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'installing-ludoxel-license-gate',
+        title: 'The License Screen Blocks Installation Until It Is Read and Accepted',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Running the installer opens a window titled "Ludoxel Installer" showing the heading "Ludoxel License Agreement" above a scrollable view of the full License Text. The "Agree and Install" button stays disabled until two conditions both hold: the License Text view has been scrolled to its end, and the checkbox labeled "I have read and agree to the Ludoxel Independent License." is checked. Scrolling back up after reaching the end does not clear the reached-end condition; only a change in the License Text\'s own content range does.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'A "Third-Party Licenses" button opens a separate list of every bundled third-party material next to its license text, reachable from the License screen without leaving the installer. A "Decline" button closes the installer without installing anything.',
+          },
+        ],
+      },
+      {
+        id: 'installing-ludoxel-progress',
+        title: 'Agree and Install Runs Five Stages in Order',
+        content: [
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              '"Verifying the installer package..." — the embedded payload\'s SHA-256, its recorded size, and the installer\'s own License Text SHA-256 are checked against the embedded manifest; installation stops here if any check fails.',
+              '"Preparing Ludoxel..." — the verified payload is extracted to a temporary location.',
+              '"Installing Ludoxel..." — the extracted application is written to its install location.',
+              '"Registering Ludoxel..." — the operating system is told the application is installed.',
+              '"Installation complete." — the Finish button becomes available.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'Only the first two stages can be cancelled. Once file installation begins, the Cancel button is disabled and the installer window refuses to close until the run finishes, fails, or is acknowledged after failure with the Retry button.',
+          },
+        ],
+      },
+      {
+        id: 'installing-ludoxel-windows-location',
+        title: 'Windows Installs Per User With No Administrator Prompt',
+        content: [
+          {
+            kind: 'paragraph',
+            text: "On Windows, Ludoxel is installed to `%LOCALAPPDATA%\\Programs\\Ludoxel` under the current user's own permissions; no administrator-privileges prompt appears anywhere in the install path. The installer creates a Start Menu shortcut and registers Ludoxel under Windows' Installed Apps (Settings > Apps), where its version, publisher, and an uninstall command become visible. Running the installer again while a Ludoxel installation already exists upgrades an older installed version in place; installing an older payload over a newer installed version is refused rather than silently downgraded.",
+          },
+        ],
+      },
+      {
+        id: 'installing-ludoxel-macos-location',
+        title: 'macOS Installs to Applications and Registers with Launch Services',
+        content: [
+          {
+            kind: 'paragraph',
+            text: "On macOS, Ludoxel is installed to `/Applications/Ludoxel.app`. Writing to `/Applications` triggers the native macOS authorization prompt only when the current user's permissions do not already allow it; the installer does not present its own credential dialog. After installation, the installer registers the bundle with Launch Services so Spotlight and Launchpad recognize it without a restart.",
+          },
+        ],
+      },
+      {
+        id: 'installing-ludoxel-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'A completed installation shows that payload verification, extraction, and per-user registration succeeded on this host. It does not establish that the installed copy is an official release or that redistributing the installer is permitted. Those questions are fixed by the controlling ',
+              { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
+              ', not by a completed install.',
+            ],
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Uninstalling Ludoxel', 'Starting Ludoxel', 'Understanding the Windows Installer', 'Understanding the macOS Installer'],
+  }),
+  defineDocsArticle({
+    category: 'Manual',
+    subcategory: 'Installing and Removing Ludoxel',
+    group: 'Desktop Installation',
+    title: 'Uninstalling Ludoxel',
+    description:
+      'Explains how to remove an installed Ludoxel on Windows through the Installed Apps entry the installer registered, what the confirmation screen shows before removal begins, which files removal deletes and which user data it leaves in place, and that macOS removal is the ordinary Finder operation because no automated macOS uninstaller is implemented.',
+    sections: [
+      {
+        id: 'uninstalling-ludoxel-windows-entry-points',
+        title: 'Windows Uninstalls Through the Installed Apps Entry',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'On Windows, choosing "Uninstall" for Ludoxel in Settings > Apps runs `Uninstall Ludoxel.exe`, a copy of the installer that the original installation placed in the install directory, with the `--uninstall` flag the installer registered as Windows\' Installed Apps uninstall command. That flag is what selects uninstall mode: `Uninstall Ludoxel.exe` is the same installer binary used to install Ludoxel, and launching it without that flag opens the License screen instead of the uninstall confirmation.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The uninstaller cannot delete its own backing file while running from inside the directory it needs to remove. After removing the Start Menu shortcut and the Installed Apps registry entry, `remove_installed_files` in `src/ludoxel_installer/platforms/windows/uninstall.py` detects that it is running from inside the install directory and writes a temporary batch script that retries the directory\'s removal every two seconds, up to sixty times, until it succeeds. The same window stays open throughout the uninstall, and the confirmation reads "Ludoxel has been uninstalled" once that removal is scheduled, ahead of the retry loop actually completing.',
+          },
+        ],
+      },
+      {
+        id: 'uninstalling-ludoxel-confirmation-and-progress',
+        title: 'The Confirmation Screen Shows the Installed Version and Location',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Before removing anything, the uninstaller shows a screen headed "Uninstall Ludoxel" naming the installed version and the install location it read from the installation\'s own receipt, above the notice "Your Ludoxel worlds, settings, and other user data will be preserved." Clicking "Uninstall" runs two stages in order: "Removing Ludoxel from Installed Apps...", which deletes the Start Menu shortcut and the Installed Apps registry entry, followed by "Removing Ludoxel...", which deletes the install directory. The final stage reads "Ludoxel has been uninstalled." Neither stage can be cancelled once started, matching the non-cancellable stages of installation.',
+          },
+        ],
+      },
+      {
+        id: 'uninstalling-ludoxel-data-retention',
+        title: 'User Data Is Not Inside the Install Directory',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Removal deletes only the install directory, the Start Menu shortcut, and the Installed Apps registration. Ludoxel worlds, settings, keybinds, skins, AI data, and Othello data live at `%LOCALAPPDATA%\\Ludoxel` on Windows, a location outside the install directory the uninstaller removes, so uninstalling Ludoxel does not delete them.',
+          },
+        ],
+      },
+      {
+        id: 'uninstalling-ludoxel-macos',
+        title: 'macOS Removal Is the Ordinary Application-Bundle Operation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Ludoxel Installer does not implement an automated uninstall path for macOS. Removing Ludoxel on macOS is the same operation as removing any other application bundle: moving `/Applications/Ludoxel.app` to the Trash. Ludoxel worlds, settings, keybinds, skins, AI data, and Othello data live at `~/Library/Application Support/Ludoxel`, outside the application bundle, and are unaffected by removing the bundle.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Installing Ludoxel', 'Starting Ludoxel', 'Understanding the Windows Installer'],
+  }),
+  defineDocsArticle({
+    category: 'Manual',
     subcategory: 'Starting the Application',
     group: 'Launch and Space Selection',
     title: 'Starting Ludoxel',
@@ -360,7 +511,18 @@ def __getattr__(name: str):
         ],
       },
     ],
-    relatedTitles: ['Reading the Main Window', 'Switching Play Spaces', 'Changing Camera Preferences', 'Writing a Problem Report', 'Supplying Platform Evidence', 'Supplying Logs Without Secrets', 'Asking a Limited Question', 'Separating Security Reports from Problem Reports', 'Understanding Unsafe Public Content'],
+    relatedTitles: [
+      'Installing Ludoxel',
+      'Reading the Main Window',
+      'Switching Play Spaces',
+      'Changing Camera Preferences',
+      'Writing a Problem Report',
+      'Supplying Platform Evidence',
+      'Supplying Logs Without Secrets',
+      'Asking a Limited Question',
+      'Separating Security Reports from Problem Reports',
+      'Understanding Unsafe Public Content',
+    ],
   }),
   defineDocsArticle({
     category: 'Manual',

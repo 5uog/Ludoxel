@@ -1,0 +1,164 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+QMainWindow,
+QWidget {
+  background: #242424;
+  color: #f5f5f5;
+  font-family: "Kaisei Opti", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+}
+
+QWidget#installerRoot {
+  background: #242424;
+  color: #f5f5f5;
+}
+
+QLabel#installerHeading {
+  color: #ffffff;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+QPushButton#primaryButton,
+QPushButton#secondaryButton {
+  color: #ffffff;
+  border-top: 3px solid #8f8f8f;
+  border-left: 3px solid #8f8f8f;
+  border-right: 3px solid #202020;
+  border-bottom: 3px solid #202020;
+  border-radius: 0px;
+  padding: 8px 18px;
+  min-height: 26px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+QPushButton#primaryButton {
+  background: #4c7f2a;
+  border-top-color: #83bc54;
+  border-left-color: #83bc54;
+  border-right-color: #1d3510;
+  border-bottom-color: #1d3510;
+}
+
+QPushButton#primaryButton:hover {
+  background: #5c9433;
+}
+
+QPushButton#primaryButton:pressed {
+  background: #3c651f;
+  border-top-color: #1d3510;
+  border-left-color: #1d3510;
+  border-right-color: #83bc54;
+  border-bottom-color: #83bc54;
+}
+
+QPushButton#primaryButton:disabled {
+  color: rgba(255, 255, 255, 120);
+  background: #3a3a3a;
+  border-top-color: #4a4a4a;
+  border-left-color: #4a4a4a;
+  border-right-color: #1a1a1a;
+  border-bottom-color: #1a1a1a;
+}
+
+QPushButton#secondaryButton {
+  background: #5c5c5c;
+}
+
+QPushButton#secondaryButton:hover {
+  background: #6d6d6d;
+}
+
+QPushButton#secondaryButton:pressed {
+  background: #484848;
+  border-top-color: #202020;
+  border-left-color: #202020;
+  border-right-color: #8f8f8f;
+  border-bottom-color: #8f8f8f;
+}
+
+QPushButton#secondaryButton:disabled {
+  color: rgba(255, 255, 255, 120);
+  background: #3a3a3a;
+  border-top-color: #4a4a4a;
+  border-left-color: #4a4a4a;
+  border-right-color: #1a1a1a;
+  border-bottom-color: #1a1a1a;
+}
+
+QPushButton#primaryButton,
+QPushButton#secondaryButton {
+  min-width: 168px;
+}
+
+QScrollBar:vertical {
+  background: #111111;
+  width: 14px;
+  margin: 0px;
+  border-left: 1px solid #050505;
+}
+
+QScrollBar::handle:vertical {
+  background: #5c5c5c;
+  min-height: 28px;
+  border-top: 1px solid #8f8f8f;
+  border-left: 1px solid #8f8f8f;
+  border-right: 1px solid #202020;
+  border-bottom: 1px solid #202020;
+}
+
+QScrollBar::handle:vertical:hover {
+  background: #6d6d6d;
+}
+
+QScrollBar::handle:vertical:pressed {
+  background: #4c7f2a;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+  height: 0px;
+  background: none;
+  border: none;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+  background: none;
+}
+
+QScrollBar:horizontal {
+  background: #111111;
+  height: 14px;
+  margin: 0px;
+  border-top: 1px solid #050505;
+}
+
+QScrollBar::handle:horizontal {
+  background: #5c5c5c;
+  min-width: 28px;
+  border-top: 1px solid #8f8f8f;
+  border-left: 1px solid #8f8f8f;
+  border-right: 1px solid #202020;
+  border-bottom: 1px solid #202020;
+}
+
+QScrollBar::handle:horizontal:hover {
+  background: #6d6d6d;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+  width: 0px;
+  background: none;
+  border: none;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+  background: none;
+}

@@ -1,9 +1,9 @@
 Ludoxel Independent License
 LicenseRef-All-Rights-Reserved
 
-Version: 2.6.0
+Version: 2.7.0
 Original Effective Date: 2026-06-03
-Current Version Effective Date: 2026-06-23
+Current Version Effective Date: 2026-07-11
 
 Copyright (c) 2026 Kento Konishi (小西拳斗).
 
@@ -204,6 +204,16 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   deployment of Ludoxel or the Documentation Site. Forks, mirrors,
   modified versions, third-party website deployments, and other
   third-party redistributions are not an Official Distribution.
+
+* "Installer" means Distribution Materials that present the License
+  Text and obtain the Licensee's affirmative acceptance of it before
+  performing any local extraction, verification, installation, or
+  operating-system registration of Ludoxel, and that remove an
+  installed copy of Ludoxel when the Licensee separately directs an
+  uninstallation. An Installer's embedded platform-specific build of
+  Ludoxel remains a Desktop Distribution, and any manifest, checksum,
+  or legal material the Installer embeds or generates remains
+  Distribution Materials.
 
 * "Use" means any act of viewing, accessing, obtaining, downloading,
   cloning, forking, storing, copying, executing, displaying,
@@ -431,6 +441,11 @@ publication, distribution, commercial use, competition use,
 educational use, AI Use, dataset use, benchmark use, or any other
 specific purpose.
 
+Uninstalling Ludoxel through an Installer removes application files,
+shortcuts, and operating-system registration entries the Installer
+created, and preserves User-Created Materials and Application Output
+unless the Licensee separately directs their deletion.
+
 7. Third-Party Materials and Provenance-Sensitive Materials
 
 Third-Party Materials remain subject to their respective license
@@ -547,6 +562,20 @@ confirmed provenance and confirmed permission.
 Signed Written Permission to distribute or deploy particular
 Distribution Materials does not make those materials an Official
 Distribution unless the written instrument expressly states that status.
+
+An Installer's presentation of the License Text and its request for
+the Licensee's affirmative acceptance are technical conditions the
+Installer imposes on its own extraction, verification, installation,
+and uninstallation routines. Section 3 fixes the full scope of
+permission available to the Licensee regardless of that technical
+gate, and the enforceability of a clickwrap or comparable acceptance
+mechanism remains a question for the law of the applicable
+jurisdiction, which this License leaves undisturbed.
+
+Third-Party Materials that an Installer bundles, displays, or makes
+selectable for review remain governed by their applicable Third-Party
+License Text under Section 7, whether or not the Installer groups
+that display near the License Text.
 
 10. Documentation Site and Hosting
 
@@ -788,4 +817,17 @@ other right, remedy, claim, or protection.
   for the Documentation Site by repository figure-generation code are
   not Application Output merely because a rendering toolchain produced
   them; and preserved the all-rights-reserved control of the Original
+  Materials.
+
+* Version 2.7.0, effective 2026-07-11, added Installer to the
+  definitions and to the Distribution Materials treatment; clarified
+  that an Installer's License Text presentation and acceptance
+  controls are technical conditions on the Installer's own routines,
+  that Section 3 fixes the permission scope regardless of that gate,
+  and that clickwrap enforceability remains a question for applicable
+  law; clarified that Third-Party Materials an Installer displays
+  remain governed by their Third-Party License Text; clarified that
+  uninstallation preserves User-Created Materials and Application
+  Output absent a separate deletion direction by the Licensee; and
+  preserved the all-rights-reserved control of the Original
   Materials.

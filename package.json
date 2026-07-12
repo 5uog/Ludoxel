@@ -1,6 +1,6 @@
 {
   "name": "ludoxel",
-  "version": "3.8.7",
+  "version": "3.8.8",
   "private": true,
   "license": "LicenseRef-All-Rights-Reserved",
   "type": "module",
@@ -9,6 +9,7 @@
   },
   "scripts": {
     "help": "node ./tools/help_commands/scripts/run/help.run.mjs",
+    "help:check": "node ./tools/help_commands/scripts/run/check.run.mjs",
     "package:check": "node ./tools/check_project/scripts/run/package.run.mjs",
     "docs:check": "node ./tools/check_project/scripts/run/docs.run.mjs",
     "license:check": "node ./tools/check_project/scripts/run/legal.run.mjs",
@@ -49,6 +50,13 @@
     "build:macos": "node ./tools/build_desktop_app/scripts/run/macos.run.mjs",
     "build:macos:help": "node ./tools/build_desktop_app/scripts/run/macos-status.run.mjs --help",
     "build:macos:check": "node ./tools/build_desktop_app/scripts/run/macos-check.run.mjs",
+    "build:installer": "node ./tools/build_installer/scripts/run/build.run.mjs",
+    "build:installer:help": "node ./tools/build_installer/scripts/run/build.run.mjs --help",
+    "build:installer:windows": "node ./tools/build_installer/scripts/run/windows.run.mjs",
+    "build:installer:windows:check": "node ./tools/build_installer/scripts/run/windows-check.run.mjs",
+    "build:installer:macos": "node ./tools/build_installer/scripts/run/macos.run.mjs",
+    "build:installer:macos:check": "node ./tools/build_installer/scripts/run/macos-check.run.mjs",
+    "build:installer:check": "node ./tools/build_installer/scripts/run/check.run.mjs",
     "build:native": "node ./tools/build_native_extensions/scripts/run/build.run.mjs",
     "build:native:check": "node ./tools/build_native_extensions/scripts/run/verify.run.mjs",
     "clean": "node ./tools/clean_build_artifacts/scripts/run/clean.run.mjs",
@@ -60,7 +68,7 @@
     "assets:block-thumbnails:check": "node ./tools/generate_block_thumbnails/scripts/run/check.run.mjs",
     "changelog:generate": "node ./tools/sync_changelog/scripts/run/generate.run.mjs",
     "changelog:check": "node ./tools/sync_changelog/scripts/run/check.run.mjs",
-    "check": "npm run format:check && npm run lint && npm run tools:test && npm run package:check && npm run docs:check && npm run license:check && npm run resources:check && npm run shader:check && npm run changelog:check",
+    "check": "npm run format:check && npm run lint && npm run tools:test && npm run help:check && npm run package:check && npm run docs:check && npm run license:check && npm run resources:check && npm run shader:check && npm run changelog:check",
     "ci": "npm run check"
   },
   "devDependencies": {

@@ -4,6 +4,7 @@
  */
 export const REQUIRED_PACKAGE_SCRIPTS = Object.freeze([
   'help',
+  'help:check',
   'check',
   'ci',
   'lint',
@@ -48,6 +49,13 @@ export const REQUIRED_PACKAGE_SCRIPTS = Object.freeze([
   'build:macos',
   'build:macos:help',
   'build:macos:check',
+  'build:installer',
+  'build:installer:help',
+  'build:installer:windows',
+  'build:installer:windows:check',
+  'build:installer:macos',
+  'build:installer:macos:check',
+  'build:installer:check',
   'clean',
   'clean:check',
   'assets:audio:convert',

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-STYLE_SHEET_FILES: tuple[str, ...] = ("base.qss", "hud.qss", "surfaces.qss", "cards.qss", "buttons.qss", "controls.qss", "about.qss", "adjuncts.qss", "chat.qss", "menu.qss")
+STYLE_SHEET_FILES: tuple[str, ...] = ("base.qss", "hud.qss", "surfaces.qss", "cards.qss", "buttons.qss", "controls.qss", "about.qss", "legal.qss", "adjuncts.qss", "chat.qss", "menu.qss")
 
 
 def load_theme_stylesheet(styles_dir: Path) -> str:

@@ -5,8 +5,6 @@
 import { verifyRustNativeExtensions } from './rust.service.mjs';
 
 export function verifyNativeExtensions(context = {}) {
-  // Every Rust target always requires the compiled extension: a fallback
-  // import never passes this check.
   const rustExitCode = verifyRustNativeExtensions(context);
   if (rustExitCode !== 0) {
     return rustExitCode;

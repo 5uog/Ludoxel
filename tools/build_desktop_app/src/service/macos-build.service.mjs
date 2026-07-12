@@ -9,12 +9,12 @@ import { basename, resolve } from 'node:path';
 
 import { buildNativeExtensionsBeforeDesktop } from '../command/native/build-native.command.mjs';
 import { buildMacosPyinstallerCommand } from '../command/pyinstaller/build-command.pyinstaller.mjs';
-import { APP_NAME, MACOS_BUNDLE_IDENTIFIER, MACOS_ENTRY_SCRIPT, MACOS_ICON_CANDIDATE_PATHS, MACOS_PUBLISH_DIR, PYINSTALLER_CONFIG_ROOT, PYINSTALLER_SPEC_ROOT, PYINSTALLER_STAGING_ROOT, PYINSTALLER_WORK_ROOT } from '../config/build.config.mjs';
+import { APP_NAME, MACOS_BUNDLE_IDENTIFIER, MACOS_ENTRY_SCRIPT, MACOS_ICON_CANDIDATE_PATHS, MACOS_PAYLOAD_DIR, PYINSTALLER_CONFIG_ROOT, PYINSTALLER_SPEC_ROOT, PYINSTALLER_STAGING_ROOT, PYINSTALLER_WORK_ROOT } from '../config/build.config.mjs';
 import { PROJECT_ROOT } from '../config/path.config.mjs';
 import { ensureDirectory } from '../shared/file/path.file.mjs';
+import { generateLicenseTextModule } from './license-codegen.service.mjs';
 import { resolvePythonExecutable } from '../shared/python/resolve.python.mjs';
 import { runProcess } from '../shared/process/run.process.mjs';
-import { copyLegalMaterial } from './legal-copy.service.mjs';
 
 const MACOS_REQUIRED_BUNDLED_RESOURCE_PATHS = Object.freeze(['Contents/Frameworks/assets/ludoxel/skins/timo.png', 'Contents/Resources/assets/ludoxel/skins/timo.png']);
 const MACOS_REQUIRED_FONT_ASSET_PATHS = Object.freeze([
@@ -247,29 +247,28 @@ function verifyMacosAppBundle(appPath) {
   }
 }
 
-function publishMacosApp(stagingDir) {
+function stageMacosPayload(stagingDir) {
   const stagedApp = macosAppPath(stagingDir);
-  const publishDir = resolve(PROJECT_ROOT, MACOS_PUBLISH_DIR);
-  const publishApp = macosAppPath(publishDir);
+  const payloadDir = resolve(PROJECT_ROOT, MACOS_PAYLOAD_DIR);
+  const payloadApp = macosAppPath(payloadDir);
 
   patchMacosInfoPlist(stagedApp);
   signMacosAppBundle(stagedApp);
   verifyMacosAppBundle(stagedApp);
 
-  ensureDirectory(publishDir);
-  rmSync(publishApp, { recursive: true, force: true });
+  ensureDirectory(payloadDir);
+  rmSync(payloadApp, { recursive: true, force: true });
 
-  cpSync(stagedApp, publishApp, {
+  cpSync(stagedApp, payloadApp, {
     recursive: true,
     force: true,
     verbatimSymlinks: true,
   });
 
-  signMacosAppBundle(publishApp);
-  verifyMacosAppBundle(publishApp);
-  copyLegalMaterial(publishDir);
+  signMacosAppBundle(payloadApp);
+  verifyMacosAppBundle(payloadApp);
 
-  console.log(`[build_desktop_app] published macOS app bundle: ${publishApp}`);
+  console.log(`[build_desktop_app] staged macOS application payload: ${payloadApp}`);
 }
 
 export function runMacosBuild(options = {}) {
@@ -308,13 +307,15 @@ export function runMacosBuild(options = {}) {
     return 0;
   }
 
+  generateLicenseTextModule();
+
   const exitCode = runProcess(command.executable, command.args, { env: pyinstallerEnv });
 
   if (exitCode !== 0) {
     return exitCode;
   }
 
-  publishMacosApp(command.stagingDir);
+  stageMacosPayload(command.stagingDir);
 
   if (!options.keepBuildCache) {
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_WORK_ROOT, token), { recursive: true, force: true });
