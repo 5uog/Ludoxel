@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import signal
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -12,7 +13,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
 from ludoxel.application.persistence.stores.app import AppStateStore
 from ludoxel.application.preferences.player_name import normalize_player_name
-from ludoxel.foundations.identity import __version__
+from ludoxel.foundations.identity import DISPLAY_VERSION
 from ludoxel.presentation.interface.common.player_name_dialog import PlayerNameDialog
 from ludoxel.presentation.interface.common.single_instance import SingleInstanceRelay
 from ludoxel.presentation.interface.common.status_overlay import status_overlay_title_image_path
@@ -93,6 +94,13 @@ def _set_windows_application_id() -> None:
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("KentoKonishi.Ludoxel")
   except Exception:
     pass
+
+
+def _install_graceful_interrupt_handler(app: QApplication) -> None:
+  def _handle_sigint(_signum: int, _frame: object) -> None:
+    app.quit()
+
+  signal.signal(signal.SIGINT, _handle_sigint)
 
 
 def _request_widget_activation(widget: QWidget | None) -> None:
@@ -242,11 +250,12 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
 
   _set_windows_application_id()
   app = QApplication([])
+  _install_graceful_interrupt_handler(app)
   app.setOrganizationName("Kento Konishi")
   app.setApplicationName("Ludoxel")
-  app.setApplicationVersion(str(__version__))
+  app.setApplicationVersion(str(DISPLAY_VERSION))
   if hasattr(app, "setApplicationDisplayName"):
-    app.setApplicationDisplayName(f"Ludoxel v{__version__}")
+    app.setApplicationDisplayName(f"Ludoxel v{DISPLAY_VERSION}")
   if hasattr(app, "setDesktopFileName"):
     app.setDesktopFileName("Ludoxel")
   app_icon = _load_application_icon(bundled_root)
@@ -340,7 +349,7 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
     w._screen.viewport._pending_open_ldxworld = str(launch_open_path)
   if app_icon is not None:
     w.setWindowIcon(app_icon)
-  w.setWindowTitle(f"Ludoxel v{__version__}")
+  w.setWindowTitle(f"Ludoxel v{DISPLAY_VERSION}")
   prefs = w.runtime_preferences()
   restore_screen = _screen_for_restore(app, screen_name=str(prefs.window_screen_name), left=prefs.window_left, top=prefs.window_top, width=int(prefs.window_width), height=int(prefs.window_height))
   restore_geometry = _restored_window_geometry(restore_screen, left=prefs.window_left, top=prefs.window_top, width=int(prefs.window_width), height=int(prefs.window_height))

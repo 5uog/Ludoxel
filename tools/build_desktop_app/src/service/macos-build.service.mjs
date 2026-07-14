@@ -15,6 +15,7 @@ import { ensureDirectory } from '../shared/file/path.file.mjs';
 import { generateLicenseTextModule } from './license-codegen.service.mjs';
 import { resolvePythonExecutable } from '../shared/python/resolve.python.mjs';
 import { runProcess } from '../shared/process/run.process.mjs';
+import { toMacosBundleVersion } from '../shared/version/bundle-version.mjs';
 
 const MACOS_REQUIRED_BUNDLED_RESOURCE_PATHS = Object.freeze(['Contents/Frameworks/assets/ludoxel/skins/timo.png', 'Contents/Resources/assets/ludoxel/skins/timo.png']);
 const MACOS_REQUIRED_FONT_ASSET_PATHS = Object.freeze([
@@ -27,7 +28,7 @@ const MACOS_REQUIRED_FONT_ASSET_PATHS = Object.freeze([
   'assets/fonts/KaiseiOpti-Bold.ttf',
 ]);
 
-const MACOS_APP_VERSION = JSON.parse(readFileSync(resolve(PROJECT_ROOT, 'package.json'), 'utf8')).version;
+const MACOS_APP_VERSION = toMacosBundleVersion(JSON.parse(readFileSync(resolve(PROJECT_ROOT, 'package.json'), 'utf8')).version);
 
 function requireMacosHost() {
   if (process.platform !== 'darwin') {

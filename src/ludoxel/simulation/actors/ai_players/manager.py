@@ -9,6 +9,7 @@ from collections import deque
 from dataclasses import dataclass, field
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
+from ludoxel.foundations.mathematics.scalars.cadence import MIN_ARM_SWING_INTERVAL_S
 from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Y
 from ludoxel.simulation.actors.ai_players.avoidance import active_avoid_support_cells, decay_avoid_support_cells, remember_avoid_support_cell
 from ludoxel.simulation.actors.ai_players.combat import _combat_control
@@ -726,13 +727,17 @@ class AiPlayerManager:
 
   @staticmethod
   def _trigger_attack_swing(actor: _AiPlayerRuntime) -> None:
+    if float(actor.attack_swing_visual_cooldown_s) > 1e-9:
+      return
     actor.attack_swing_progress = 0.0
     actor.attack_prev_swing_progress = 0.0
     actor.attack_swing_active = True
+    actor.attack_swing_visual_cooldown_s = float(MIN_ARM_SWING_INTERVAL_S)
 
   @staticmethod
   def _advance_attack_swing(actor: _AiPlayerRuntime, *, dt: float) -> None:
     actor.attack_prev_swing_progress = float(actor.attack_swing_progress)
+    actor.attack_swing_visual_cooldown_s = max(0.0, float(actor.attack_swing_visual_cooldown_s) - max(0.0, float(dt)))
     if not bool(actor.attack_swing_active):
       actor.attack_swing_progress = 0.0
       return

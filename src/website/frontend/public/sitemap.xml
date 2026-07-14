@@ -1009,6 +1009,24 @@
     <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-application-runtime-assembly#see-also</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-arm-swing-cadence</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-arm-swing-cadence#arm-swing-cadence-shared-ceiling</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-arm-swing-cadence#arm-swing-cadence-local-player</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-arm-swing-cadence#arm-swing-cadence-ai-player</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-arm-swing-cadence#arm-swing-cadence-gameplay-separation</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-arm-swing-cadence#see-also</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-render-snapshots</loc>
   </url>
   <url>

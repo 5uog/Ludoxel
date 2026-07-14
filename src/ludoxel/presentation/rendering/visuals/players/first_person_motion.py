@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ludoxel.foundations.mathematics.scalars.cadence import MIN_ARM_SWING_INTERVAL_S
+
 _EQUIP_RATE_PER_SECOND = 8.0
 _SWAP_THRESHOLD = 0.05
 _SWING_DURATION_S = 6.0 / 20.0
@@ -50,6 +52,7 @@ class FirstPersonMotionController:
     self._equip_lowering: bool = False
     self._equip_raising: bool = False
     self._swing_active: bool = False
+    self._swing_cadence_cooldown_s: float = 0.0
 
   def prime(self, item_id: str | None) -> None:
     normalized = _normalize_item_id(item_id)
@@ -63,6 +66,7 @@ class FirstPersonMotionController:
     self._equip_lowering = False
     self._equip_raising = False
     self._swing_active = False
+    self._swing_cadence_cooldown_s = 0.0
 
   def set_target_item_id(self, item_id: str | None) -> None:
     normalized = _normalize_item_id(item_id)
@@ -81,11 +85,17 @@ class FirstPersonMotionController:
     self.swing_duration_s = max(1e-6, float(duration_s))
 
   def trigger_left_swing(self) -> None:
-    self._start_swing()
+    self._request_swing()
 
   def trigger_right_swing(self, *, success: bool) -> None:
     if bool(success):
-      self._start_swing()
+      self._request_swing()
+
+  def _request_swing(self) -> None:
+    if float(self._swing_cadence_cooldown_s) > 1e-9:
+      return
+    self._start_swing()
+    self._swing_cadence_cooldown_s = float(MIN_ARM_SWING_INTERVAL_S)
 
   def _start_swing(self) -> None:
     self.swing_progress = 0.0
@@ -95,6 +105,7 @@ class FirstPersonMotionController:
   def update(self, dt: float) -> None:
     step = max(0.0, float(dt))
     self._visual_time_s = float(self._visual_time_s) + float(step)
+    self._swing_cadence_cooldown_s = max(0.0, float(self._swing_cadence_cooldown_s) - float(step))
 
     self.prev_equip_progress = float(self.equip_progress)
     self.prev_swing_progress = float(self.swing_progress)

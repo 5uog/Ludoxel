@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from ludoxel.application.sessions.managers.session import SessionManager
 from ludoxel.foundations.diagnostics import GpuUtilizationSampler, ProcessMemorySnapshot, SystemInfo, read_process_memory, read_system_info
-from ludoxel.foundations.identity import __version__
+from ludoxel.foundations.identity import DISPLAY_VERSION
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.interface.hud.metrics import PlayerMetricsTracker
 from ludoxel.presentation.interface.hud.payload import HudPayload
@@ -309,7 +309,7 @@ class HudController:
     lines.append(str(sel_line))
     lines.append(f"Cloud: {int(bool(cloud_enabled))} | Density: {int(cloud_density)} |\nSeed: {int(cloud_seed)} | Cloud Wireframe: {int(bool(cloud_wire))} |\n")
     lines.append(f"World Wireframe: {int(bool(world_wire))} | Shadow: {int(bool(shadow_ok))} | Size: {int(shadow_size)} | DBG: {int(bool(debug_shadow))} | Sun: {float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}\n")
-    lines.append(f"Ludoxel v{__version__} | Display: {int(fb_w)}x{int(fb_h)} | DPR: {float(dpr):.2f}")
+    lines.append(f"Ludoxel v{DISPLAY_VERSION} | Display: {int(fb_w)}x{int(fb_h)} | DPR: {float(dpr):.2f}")
 
     renderer_vendor, renderer_name, renderer_api, shader_lang = renderer.gl_info()
     if renderer_name:

@@ -207,6 +207,7 @@ def __getattr__(name: str):
           '`run_app` imports `install_othello_book_storage_hooks` only after root resolution and invokes it before `ludoxel.presentation.interface.windows.main.run_app`. `MainWindow` then constructs `GameScreen` with the same project, resource, and data roots; `GameScreen` constructs the viewport that owns loading state and session presentation. The startup chain preserves those roots across the bootstrap-to-window transition, so a visible screen can be tied to the runtime roots supplied at launch.',
           '`project_root` identifies the application context, `resource_root` identifies bundled runtime material, and `data_root` identifies the user-state root that later persistence consumers will use. The pre-presentation Othello book-storage hook prepares its storage path. Board activation, visibility, restoration, and selection occur through the Othello session and interface paths.',
           'In source-tree execution, `_ensure_python_314` may re-execute the module through a preferred Python 3.14 interpreter. In a frozen executable the function returns immediately because the runtime is already part of the packaged process. A failure before any Qt surface exists is therefore a launch-environment or bootstrap-path condition, not camera movement, hotbar interaction, Othello move legality, renderer overlay behavior, or play-space switching.',
+          'On Windows, that re-execution runs the Python 3.14 interpreter as one child process through `_run_windows_python_314_child` and waits for its exit code; it does not replace the current process image. Because the relaunched child shares the parent console, an interruption delivered there reaches the parent while it waits on the child. The parent absorbs its own interruption without printing a traceback and keeps waiting rather than returning ahead of the child, so the process that actually owns the Qt shell is never left running unattended and its real exit code, not a substitute, becomes the parent’s own. On macOS and Linux the module instead replaces the current process image directly, so no second process or wait loop is ever created there.',
           '`default_project_root` and `default_resource_root` first honor a frozen application root, then search upward from the module location and working directory for `pyproject.toml` or the `assets`/`src` pair. The fallback is the supplied start directory. Those functions establish locations only; `run_app` has not admitted an `AppState`, instantiated a `SessionManager`, or asked a renderer to allocate resources at that point.',
         ],
         codeBlocks: [
@@ -237,6 +238,19 @@ def __getattr__(name: str):
   candidate = _preferred_python_314()
   if candidate is None:
     return`,
+          },
+          {
+            language: 'py',
+            caption: 'The Windows child wait absorbs its own interruption and keeps waiting, so the child is never orphaned and never doubles the parent’s traceback.',
+            code: `def _run_windows_python_314_child(argv: list[str], *, env: dict[str, str], cwd: Path) -> int:
+  import subprocess
+
+  process = subprocess.Popen(argv, env=env, cwd=str(cwd))
+  while True:
+    try:
+      return int(process.wait())
+    except KeyboardInterrupt:
+      continue`,
           },
         ],
       },
@@ -1629,7 +1643,7 @@ ACTION_TOGGLE_DEBUG_HUD = "toggle_debug_hud"`,
         body: [
           'Turning capture on activates the window, focuses the viewport, hides the cursor with a blank cursor override, and grabs both the mouse and keyboard. Grabbing routes pointer and key events to the viewport so gameplay input is not stolen by other widgets.',
           'The cursor is hidden both through a Qt override cursor and by setting the blank cursor on the viewport and its host window, so the pointer does not reappear over the window chrome while you play.',
-          '`set_mouse_capture(True)` records `_captured` before it activates the host, focuses the viewport, applies the override, sets both cursors, and requests Qt grabs. `ensure_mouse_capture_applied` repeats the focus and cursor application while capture stays active. The capture state therefore controls the input adapter’s own actions; Qt and the operating system still retain their separate focus and permission rules.',
+          '`set_mouse_capture(True)` records `_captured` before it activates the host, focuses the viewport, applies the override, sets both cursors, and requests Qt grabs. `ensure_mouse_capture_applied` does not repeat that sequence unconditionally: it first checks `isActiveWindow()`, `hasFocus()`, and the viewport’s own cursor shape, and re-runs the activation, focus, and cursor calls only when one of those three has drifted from the captured state. The capture state therefore controls the input adapter’s own actions; Qt and the operating system still retain their separate focus and permission rules.',
           '`MacosCursorWarp.available()` and `warp()` reject non-macOS execution and report CoreGraphics load or call failures through `MacosCursorWarpResult`. `ViewportInput` falls through to `QCursor.setPos` when that native warp does not succeed. The result identifies the branch selected by Ludoxel; it cannot certify the host desktop’s pointer confinement, Input Monitoring grant, or all device-specific event behavior.',
         ],
         codeBlocks: [
@@ -1705,7 +1719,7 @@ ACTION_TOGGLE_DEBUG_HUD = "toggle_debug_hud"`,
         title: 'Relative Movement Is Polled Each Frame',
         body: [
           'While captured, the relative delta is polled each frame. On the native path it reads accumulated relative movement; on the warp path it measures the cursor offset from center, adds it to the input adapter, and warps back. The captured-move event handler feeds the same adapter when Qt delivers move events.',
-          'The poll re-applies the capture state every frame, which keeps focus, the hidden cursor, and the grabs in place even if the window manager tried to change them, so capture stays stable during continuous play.',
+          'Each poll checks the same activation state before deciding whether to re-apply it. While the viewport already holds the active window, keyboard focus, and a hidden cursor, `ensure_mouse_capture_applied` returns without touching any of them again; only a detected drift, such as a lost activation, a stolen focus, or a cursor the window manager reset, triggers the activation, focus, and cursor calls once more. Capture stays stable during continuous play without a native window-activation call repeating on every simulation tick.',
           '`poll_relative_mouse_delta` chooses one producer per call: an active native capture drains `MacosRelativeMouseCapture`, and the normal warp path measures `QCursor.pos()` against `_center_global()`. A retained pending-sync branch can discard movement and recenter if explicitly armed, but the ordinary overlay-close resume path clears that guard before capture returns. `on_captured_mouse_move` feeds the same adapter for accepted Qt move events once their offset is outside the near-center threshold. Both producers converge at `QtInputAdapter.add_mouse_delta`; neither producer changes player yaw directly.',
         ],
         codeBlocks: [

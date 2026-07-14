@@ -229,7 +229,7 @@ def cycle_camera_perspective(value: object, step: int = 1) -> str:
         ],
       },
     ],
-    relatedTitles: ['Looking Around', 'Using Mouse Capture', 'Understanding Saved Preferences'],
+    relatedTitles: ['Looking Around', 'Using Mouse Capture', 'Understanding Saved Preferences', 'Understanding Arm Swing Cadence'],
   }),
   defineDocsArticle({
     category: 'Settings',

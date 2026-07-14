@@ -131,18 +131,28 @@ class ViewportInput:
       self._capture_sync_pending = False
       self._capture_sync_stable_polls = 0
 
+  def _activation_state_current(self) -> bool:
+    if not bool(self._w.isActiveWindow()):
+      return False
+    if not bool(self._w.hasFocus()):
+      return False
+    if self._w.cursor().shape() != Qt.CursorShape.BlankCursor:
+      return False
+    return True
+
   def ensure_mouse_capture_applied(self) -> None:
     if not bool(self._captured):
       return
-    self._w.activateWindow()
-    host_window = self._w.window()
-    if host_window is not None:
-      host_window.activateWindow()
-    self._w.setFocus(Qt.FocusReason.MouseFocusReason)
-    self._sync_override_cursor(hidden=True)
-    self._w.setCursor(Qt.CursorShape.BlankCursor)
-    if host_window is not None:
-      host_window.setCursor(Qt.CursorShape.BlankCursor)
+    if not bool(self._activation_state_current()):
+      self._w.activateWindow()
+      host_window = self._w.window()
+      if host_window is not None:
+        host_window.activateWindow()
+      self._w.setFocus(Qt.FocusReason.MouseFocusReason)
+      self._sync_override_cursor(hidden=True)
+      self._w.setCursor(Qt.CursorShape.BlankCursor)
+      if host_window is not None:
+        host_window.setCursor(Qt.CursorShape.BlankCursor)
     if sys.platform == "darwin":
       self._w.grabMouse()
       self._w.grabKeyboard()

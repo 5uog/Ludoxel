@@ -210,6 +210,7 @@ class _AiPlayerRuntime:
   attack_swing_progress: float = 0.0
   attack_prev_swing_progress: float = 0.0
   attack_swing_active: bool = False
+  attack_swing_visual_cooldown_s: float = 0.0
   learn_last_action: str | None = None
 
   def to_state(self) -> AiPlayerState:

@@ -23,7 +23,7 @@ from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.application.sessions.context.play_space import PlaySpaceContext
 from ludoxel.application.sessions.managers.learning import AiLearningRuntime
 from ludoxel.application.sessions.runners.fixed_step import FixedStepRunner
-from ludoxel.foundations.identity import __version__
+from ludoxel.foundations.identity import DISPLAY_VERSION
 from ludoxel.presentation.audio import AudioManager
 from ludoxel.presentation.interface.common.status_overlay import status_overlay_title_image_path
 from ludoxel.presentation.interface.config.game_loop import DEFAULT_GAME_LOOP_PARAMS, GameLoopParams
@@ -222,7 +222,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     self._route_overlay.setVisible(True)
 
     self._inventory = InventoryOverlay(parent=self, resource_root=self._resource_root, registry=self._session.block_registry)
-    self._menu = StartupShellOverlay(resource_root=self._resource_root, version_text=f"v{__version__}", parent=self)
+    self._menu = StartupShellOverlay(resource_root=self._resource_root, version_text=f"v{DISPLAY_VERSION}", parent=self)
 
     self._overlays = ViewportOverlays(
       refs=OverlayRefs(pause=self._overlay, settings=self._settings, othello_settings=self._othello_settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hotbar=self._hotbar, menu=self._menu, hud_getter=lambda: self._hud, othello_hud_getter=lambda: self._othello_hud),

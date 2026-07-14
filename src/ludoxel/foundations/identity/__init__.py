@@ -2,6 +2,6 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from ludoxel.foundations.identity.version import __version__
+from ludoxel.foundations.identity.version import DISPLAY_VERSION, __version__
 
-__all__ = ["__version__"]
+__all__ = ["DISPLAY_VERSION", "__version__"]

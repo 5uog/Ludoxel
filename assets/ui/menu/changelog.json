@@ -2,6 +2,38 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.8 Hotfix 1",
+      "tags": [
+        "Desktop Application",
+        "Player Animation",
+        "AI Animation",
+        "Input",
+        "Windows",
+        "Startup"
+      ],
+      "sections": [
+        {
+          "title": "Player and AI Arm Swings Are Capped at Five Visible Starts Per Second",
+          "items": [
+            "`FirstPersonMotionController.trigger_left_swing` and `trigger_right_swing` in `src/ludoxel/presentation/rendering/visuals/players/first_person_motion.py` now route every swing request through `_request_swing`, which admits a new swing only after `MIN_ARM_SWING_INTERVAL_S`, 0.2 seconds, has elapsed since the last one it admitted, and drops the request otherwise without queuing it for later replay. That interval and its `MAX_ARM_SWING_CPS` reciprocal, 5.0, are defined once in `src/ludoxel/foundations/mathematics/scalars/cadence.py`, the one layer both the presentation controller and the simulation-side AI manager are permitted to import. Left-click, right-click, and every block-place and block-interact repeat path that reaches the controller inherit the same ceiling without any change to their own click admission, repeat interval, or cooldown.",
+            "`AiPlayerManager._trigger_attack_swing` and `_advance_attack_swing` in `src/ludoxel/simulation/actors/ai_players/manager.py` apply the identical ceiling to each AI actor's own `attack_swing_visual_cooldown_s`, a new runtime-only field on `_AiPlayerRuntime` that `to_state()` never writes into the persisted `AiPlayerState`. A rejected swing request never reaches the attack, block-break, or block-place logic that requested it, because every caller invokes the swing trigger only after that gameplay action has already completed."
+          ]
+        },
+        {
+          "title": "Mouse Capture No Longer Reactivates the Window on Every Simulation Tick",
+          "items": [
+            "`ViewportInput.ensure_mouse_capture_applied` in `src/ludoxel/presentation/interface/input/game_input.py`, previously called unconditionally from both the render loop's `paintGL` and every fixed-step `poll_relative_mouse_delta`, now checks `isActiveWindow()`, `hasFocus()`, and the viewport's own cursor shape before re-running window activation, focus, and cursor calls, and skips that work entirely once capture is already correctly applied. The macOS-specific mouse and keyboard grab reassertion inside the same method is unchanged and still runs on every call while captured."
+          ]
+        },
+        {
+          "title": "The Windows Python 3.14 Relaunch No Longer Orphans Its Child or Duplicates a Traceback",
+          "items": [
+            "`_ensure_python_314` in `src/ludoxel/application/bootstrap/run.py` now launches the preferred Python 3.14 interpreter through `_run_windows_python_314_child`, a `subprocess.Popen` wait loop that re-enters `process.wait()` whenever the wait itself raises `KeyboardInterrupt` instead of letting that exception reach the top of the parent process. A `signal.signal(signal.SIGINT, ...)` handler installed in `src/ludoxel/presentation/interface/windows/main.py`'s `run_app` calls `QApplication.quit()` on that same interruption wherever that function runs, so a console interruption delivered to a Windows relaunch's shared console no longer prints a parent-side traceback beside the child's own. The child's real exit code still reaches `SystemExit` in the parent, and non-Windows execution is unaffected because that platform replaces the process image directly instead of creating a child process."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.8",
       "tags": [
         "Desktop Application",

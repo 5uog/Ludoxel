@@ -222,6 +222,18 @@ export const systemsPages: DocsPageContent[] = [
           },
           {
             kind: 'paragraph',
+            text: [
+              'The Windows branch of that handoff owns one additional contract: it starts the Python 3.14 interpreter as a `subprocess.Popen` child and waits on it in a loop that re-enters `process.wait()` whenever the wait itself raises `KeyboardInterrupt`, rather than letting that exception reach the top of the parent process. A shared-console interruption therefore never orphans the child and never causes the parent to print its own interruption traceback beside the child’s. `_ensure_python_314` still returns the child’s real exit code through `SystemExit`, so a genuine crash in the child remains visible as a non-zero parent exit; only the interruption path is absorbed. The full launch chain, including the guard clauses that skip this branch entirely for a frozen build or an already-matching interpreter, is traced by ',
+              {
+                kind: 'link',
+                label: 'Starting Ludoxel',
+                href: '/docs/manual/starting-the-application/launch-and-space-selection/starting-ludoxel',
+              },
+              '.',
+            ],
+          },
+          {
+            kind: 'paragraph',
             text: 'The opening-book hook separates a user delta at `state/othello_opening_book.json` from its compiled cache under the runtime cache root. The application writes and integrity-updates the user file, while cache load, save, and removal remain cache operations. A resolved data root therefore locates mutable state; it does not grant any permission over that state or over material that may be imported into it.',
           },
         ],
@@ -329,7 +341,136 @@ export const systemsPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: ['Understanding Fixed Step Sessions', 'Understanding Render Snapshots', 'Understanding Saved Preferences', 'Reading Saved Preferences', 'Reading Saved Othello State', 'Switching Play Spaces'],
+    relatedTitles: ['Starting Ludoxel', 'Understanding Fixed Step Sessions', 'Understanding Render Snapshots', 'Understanding Saved Preferences', 'Reading Saved Preferences', 'Reading Saved Othello State', 'Switching Play Spaces'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Runtime and Render State',
+    group: 'Session Loop',
+    title: 'Understanding Arm Swing Cadence',
+    description:
+      'Documents the shared visual-swing cadence ceiling defined once in foundations, the local-player and AI-player controllers that each gate their own swing request against it from opposite sides of the simulation/presentation boundary, and the separation between a dropped visual request and the gameplay action that keeps triggering it.',
+    sections: [
+      {
+        id: 'arm-swing-cadence-shared-ceiling',
+        title: 'One Constant Bounds Two Owners That Cannot See Each Other',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`MAX_ARM_SWING_CPS` and `MIN_ARM_SWING_INTERVAL_S` are defined once in `src/ludoxel/foundations/mathematics/scalars/cadence.py`. Two independent owners consume that pair: `FirstPersonMotionController` in `src/ludoxel/presentation/rendering/visuals/players/first_person_motion.py` gates the local player’s swing, and `AiPlayerManager` in `src/ludoxel/simulation/actors/ai_players/manager.py` gates each AI actor’s swing from inside the simulation layer. Simulation code cannot import presentation code, so the constant could not live beside either controller without being duplicated as a bare literal in the other; foundations is the one layer both `simulation` and `presentation` are permitted to import, which is why this numeric pair, and not the swing-triggering behavior itself, lives there.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/scalars/cadence.py',
+            code: `MAX_ARM_SWING_CPS: float = 5.0
+MIN_ARM_SWING_INTERVAL_S: float = 1.0 / MAX_ARM_SWING_CPS`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: '\\mathrm{MIN\\_ARM\\_SWING\\_INTERVAL\\_S} = \\frac{1}{\\mathrm{MAX\\_ARM\\_SWING\\_CPS}} = \\frac{1}{5.0\\ \\mathrm{s^{-1}}} = 0.2\\ \\mathrm{s}',
+              displayMode: true,
+              caption: 'A visual swing request is admitted only after at least this many seconds have elapsed since the last one that was.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'arm-swing-cadence-local-player',
+        title: 'The Local Player Controller Owns a Cooldown, Not a Queue',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`FirstPersonMotionController` already owned `_visual_time_s`, an elapsed-time clock advanced only by its own `update(dt)`, so the swing cadence gate reuses that same fixed-step-driven timing rather than reading a wall clock independently. `trigger_left_swing` and `trigger_right_swing` no longer reset swing progress directly; both call `_request_swing`, which admits the request only when `_swing_cadence_cooldown_s` has decayed to zero, starts the swing, and reloads the cooldown to `MIN_ARM_SWING_INTERVAL_S`. A request that arrives before the cooldown has decayed is dropped: nothing about it is queued, retried, or replayed once the cooldown next reaches zero.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/players/first_person_motion.py',
+            code: `  def trigger_left_swing(self) -> None:
+    self._request_swing()
+
+  def trigger_right_swing(self, *, success: bool) -> None:
+    if bool(success):
+      self._request_swing()
+
+  def _request_swing(self) -> None:
+    if float(self._swing_cadence_cooldown_s) > 1e-9:
+      return
+    self._start_swing()
+    self._swing_cadence_cooldown_s = float(MIN_ARM_SWING_INTERVAL_S)
+
+  def _start_swing(self) -> None:
+    self.swing_progress = 0.0
+    self.prev_swing_progress = 0.0
+    self._swing_active = True`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'c_{t+\\Delta t} = \\max(0,\\ c_t - \\Delta t), \\qquad \\text{admitted} \\iff c_t \\le 10^{-9}',
+              displayMode: true,
+              caption: 'The cadence cooldown c decays once per `update(dt)` call; `_request_swing` reads c before the current step’s decay is applied.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'A pure drop, with no pending slot, is what keeps a burst of held-button input from replaying after the player releases the button: because nothing is retained about a rejected request, there is nothing left to flush once the cooldown next reaches zero on its own. `prime()`, called when the visible item changes, resets `_swing_cadence_cooldown_s` to zero alongside the swing and equip state it already reset, so switching items cannot leave a stale cooldown blocking the first swing of the newly equipped item.',
+          },
+        ],
+      },
+      {
+        id: 'arm-swing-cadence-ai-player',
+        title: 'The AI Manager Advances the Same Contract Inside the Simulation Step',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'An AI actor has no `FirstPersonMotionController`. `_AiPlayerRuntime` in `src/ludoxel/simulation/actors/ai_players/runtime.py` instead carries `attack_swing_progress`, `attack_prev_swing_progress`, `attack_swing_active`, and now `attack_swing_visual_cooldown_s` as plain runtime-only fields; none of the four are written by `to_state()` into the persisted `AiPlayerState`. `AiPlayerManager._trigger_attack_swing` and `_advance_attack_swing` are `staticmethod`s that read and write only those four fields on the actor passed to them, mirroring the local controller’s admit-or-drop shape and decaying the same cooldown on every `dt`.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/ai_players/manager.py',
+            code: `  @staticmethod
+  def _trigger_attack_swing(actor: _AiPlayerRuntime) -> None:
+    if float(actor.attack_swing_visual_cooldown_s) > 1e-9:
+      return
+    actor.attack_swing_progress = 0.0
+    actor.attack_prev_swing_progress = 0.0
+    actor.attack_swing_active = True
+    actor.attack_swing_visual_cooldown_s = float(MIN_ARM_SWING_INTERVAL_S)`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`_advance_attack_swing` runs inside `AiPlayerManager.step`, once per live actor per fixed quantum, so its `dt` is the same simulation-owned step value consumed by every other per-actor cooldown in that loop rather than a value read from a wall clock. `_trigger_attack_swing` itself is called from exactly one site: the melee-attack branch that also sets `attack_cooldown_s` to `_AI_ATTACK_COOLDOWN_S`, 0.45 seconds. Because that gameplay cooldown already exceeds `MIN_ARM_SWING_INTERVAL_S`, an aggressive AI actor’s own attack pacing does not currently reach the visual ceiling; the cooldown field keeps the shared contract in force if that gameplay cooldown is ever tuned below 0.2 seconds, not because today’s AI combat pacing violates it. AI block breaking and placement call neither method, so this ceiling has nothing to throttle on those paths.',
+          },
+        ],
+      },
+      {
+        id: 'arm-swing-cadence-gameplay-separation',
+        title: 'A Dropped Visual Request Never Touches the Gameplay Action',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Every caller of `trigger_left_swing` or `trigger_right_swing` invokes it after the gameplay action it accompanies has already run to completion. `_perform_left_click` in `src/ludoxel/presentation/interface/viewport/controllers/interaction.py` performs the local attack and the creative-mode break before requesting the swing; `_finalize_right_click`, reached from every place-repeat and interact-repeat branch in the same module, requests the swing after `outcome.success` is already known. Neither call site reads a return value from the trigger, and neither method returns anything but `None`, so a dropped request cannot skip, delay, or roll back the block mutation, damage, cooldown, or audio and particle events that click already produced. The same separation holds in the simulation layer: `_trigger_attack_swing` runs only after `apply_melee_damage` has already been applied by its one caller. Block break, block place, block interaction, and attack keep their existing repeat intervals and cooldowns unchanged; only how often the arm visibly resets to the start of a swing now has a ceiling.',
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              'This ceiling bounds how often a swing may start; it does not change how long a started swing takes to finish. That duration remains `arm_swing_duration_s`, a field `RuntimePreferences.normalize` clamps but the Display tab does not expose as a control, covered by ',
+              {
+                kind: 'link',
+                label: 'arm swing duration',
+                href: '/docs/settings/visual-and-audio-settings/camera-and-crosshair/changing-camera-preferences',
+              },
+              '. Because the default duration, 0.3 seconds, is longer than the 0.2-second interval this ceiling admits, a sustained five-request-per-second input can still let a newly admitted swing interrupt one that has not finished animating; the ceiling bounds admission frequency, not animation completion.',
+            ],
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding Fixed Step Sessions', 'Understanding Render Snapshots', 'Understanding First-Person Arm Geometry', 'Understanding the Player Model Pose', 'Changing Camera Preferences'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1774,7 +1915,7 @@ FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
         ],
       },
     ],
-    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Held Block Geometry', 'Understanding the Player Model Pose', 'Understanding Render Snapshots'],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Held Block Geometry', 'Understanding the Player Model Pose', 'Understanding Render Snapshots', 'Understanding Arm Swing Cadence'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1992,7 +2133,7 @@ FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
         ],
       },
     ],
-    relatedTitles: ['Understanding Render Snapshots', 'Understanding Held Block Geometry', 'Understanding First-Person Arm Geometry', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Looking Around'],
+    relatedTitles: ['Understanding Render Snapshots', 'Understanding Held Block Geometry', 'Understanding First-Person Arm Geometry', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Looking Around', 'Understanding Arm Swing Cadence'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -2754,19 +2895,20 @@ class DemonstrationRecord:
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/foundations/identity/version.py` owns the runtime version identity as one assigned string. `pyproject.toml` obtains the package version from that attribute, while `src/ludoxel/presentation/interface/windows/main.py` consumes the same value for the Qt application version, display name, and window title. The root README and Website display the same label as descriptions. Release approval, legal permission, packaging, and publication remain under their governing sources.',
+            text: '`src/ludoxel/foundations/identity/version.py` owns the runtime version identity as two assigned strings. `__version__` is the PEP 440-conformant package version: `pyproject.toml` obtains it through its `attr` reference to that module, and `src/ludoxel/application/persistence/packages/ldxworld.py` records it as the `app_version` field of each saved world envelope. `DISPLAY_VERSION` is a separate release-facing string carrying no PEP 440 or SemVer constraint; `src/ludoxel/presentation/interface/windows/main.py` consumes it for the Qt application version, application display name, and window title, `src/ludoxel/presentation/interface/hud/controller.py` reads it for the in-game HUD version line, and `src/ludoxel/presentation/interface/viewport/widgets/gl.py` and `src/ludoxel/presentation/interface/viewport/widgets/renderer.py` read it for their startup-overlay version text. Release approval, legal permission, packaging, and publication remain under their governing sources.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.8"`,
+            code: `__version__ = "3.8.8.post1"
+DISPLAY_VERSION = "3.8.8 Hotfix 1"`,
           },
           {
             kind: 'note',
             note: {
               type: 'note',
-              content: 'A matching version string can identify one runtime and one metadata value. It is not evidence that a local build is an official release or that any distribution action is authorized.',
+              content: 'Matching `__version__` or `DISPLAY_VERSION` values identify build and display metadata at that source. Neither string is evidence that a local build is an official release or that any distribution action is authorized.',
             },
           },
         ],

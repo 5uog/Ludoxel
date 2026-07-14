@@ -30,6 +30,17 @@ def _preferred_python_314() -> Path | None:
   return None
 
 
+def _run_windows_python_314_child(argv: list[str], *, env: dict[str, str], cwd: Path) -> int:
+  import subprocess
+
+  process = subprocess.Popen(argv, env=env, cwd=str(cwd))
+  while True:
+    try:
+      return int(process.wait())
+    except KeyboardInterrupt:
+      continue
+
+
 def _ensure_python_314(project_root: Path) -> None:
   if is_frozen_application():
     return
@@ -48,10 +59,7 @@ def _ensure_python_314(project_root: Path) -> None:
 
   argv = [str(candidate), "-m", "ludoxel", *sys.argv[1:]]
   if os.name == "nt":
-    import subprocess
-
-    completed = subprocess.run(argv, env=env, cwd=str(project_root), check=False)
-    raise SystemExit(int(completed.returncode))
+    raise SystemExit(int(_run_windows_python_314_child(argv, env=env, cwd=project_root)))
 
   os.execve(str(candidate), argv, env)
 
