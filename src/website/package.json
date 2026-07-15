@@ -18,7 +18,7 @@
     "@vercel/analytics": "^2.0.0",
     "@vercel/speed-insights": "^2.0.0",
     "katex": "^0.17.0",
-    "lucide-react": "^1.23.0",
+    "lucide-react": "^1.24.0",
     "ludoxel": "file:../..",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -32,10 +32,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.3",
-    "postcss": "^8.5.16",
+    "postcss": "^8.5.19",
     "prettier": "^3.4.2",
     "tailwindcss": "^4.3.1",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "^8.0.16"
   }
 }
