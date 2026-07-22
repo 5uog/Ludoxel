@@ -38,7 +38,7 @@ dependencies = [
     "PyQt6>=6.6,<7",
     "numpy>=1.26,<3",
     "PyOpenGL>=3.1,<4; platform_system == 'Windows'",
-    "wgpu>=0.31,<0.32; platform_system == 'Darwin'",
+    "wgpu>=0.31,<0.33; platform_system == 'Darwin'",
     "rendercanvas>=2.6,<3; platform_system == 'Darwin'",
 ]
 
