@@ -17,25 +17,25 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.0",
     "@vercel/speed-insights": "^2.0.0",
-    "katex": "^0.17.0",
-    "lucide-react": "^1.23.0",
+    "katex": "^0.18.1",
+    "lucide-react": "^1.25.0",
     "ludoxel": "file:../..",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.2",
-    "@tailwindcss/vite": "^4.3.2",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/katex": "^0.16.8",
     "@types/node": "^26.1.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.3",
-    "postcss": "^8.5.16",
+    "@vitejs/plugin-react": "^6.0.4",
+    "postcss": "^8.5.22",
     "prettier": "^3.4.2",
     "tailwindcss": "^4.3.1",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "^8.0.16"
   }
 }
